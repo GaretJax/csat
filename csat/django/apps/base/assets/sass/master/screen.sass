@@ -1,0 +1,72 @@
+@import compass
+@import compass/css3/user-interface
+
++font-face('Roboto', font-files("fonts/Roboto-Thin.ttf"))
+
+@import variables
+@import forms
+@import spinner
+@import flip-panel
+@import flip-box
+
+body
+	padding: 20px
+
+.table-bordered .col-no-border-left
+	border-left: 0
+	padding-bottom: 0
+	padding-top: 0
+	vertical-align: middle
+
+.align-left.align-left
+	text-align: left
+
+.align-right.align-right
+	text-align: right
+
+.align-center.align-center
+	text-align: center
+
+.table .small-row-header
+	width: 1px
+	padding-left: 1.5em
+	padding-right: 1.5em
+	text-align: right
+
+.table td p:last-child
+	margin-bottom: 0
+
+.modal-background
+	$hd: $dialogsAnimationDuration/2
+	position: fixed
+	top: 0
+	left: 0
+	right: 0
+	bottom: 0
+	display: none
+	z-index: $zindexModalBackdrop
+
+	&.active
+		display: block
+
+	&:not(.visible)
+		+transition(all $hd 0s)
+
+	&.visible
+		background: rgba(#000, .2)
+		+transition(all $hd $hd)
+
+.confirm-panel
+	max-width: 500px
+	margin: 100px auto 0
+	padding: 20px
+	text-align: center
+	border: 1px solid #eee
+	background: #fafafa
+	+box-shadow(#fff 0px 0px 10px inset)
+	+border-radius($borderRadiusLarge)
+	+box-sizing(border-box)
+
+	form
+		margin: 0
+		padding-top: 20px

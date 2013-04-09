@@ -1,0 +1,355 @@
+@import compass
+@import variables
+@import animation
+
+.detail-list
+	margin: 0
+	padding: 0
+
+	li
+		display: block
+		padding: 5px 0
+		border-top: 1px solid #ddd
+		border-bottom: 1px solid #ddd
+		margin-top: -1px
+
+	.muted
+		color: $grayLight
+		font-weight: 300
+		font-size: 0.86em
+		text-transform: uppercase
+
+	strong
+		font-family: 'Roboto'
+		font-size: 30px
+		line-height: 30px
+		height: 30px
+		color: #333
+
+	.btns
+		font-size: 0
+		//opacity: 0
+		//+transition(opacity .3s ease-in)
+
+	.btn
+		width: 48.5%
+		font-size: $baseFontSize
+		+box-sizing(border-box)
+
+		& + .btn
+			margin-left: 3%
+
+//.session-details
+//	&:hover .detail-list .btns
+//		opacity: 1
+
+
+.session-list
+	> li
+		.front-panel
+			width: 230px
+			height: 300px
+			float: left
+
+			> strong
+				padding-bottom: 20px
+				display: block
+				font-family: 'Roboto'
+				font-size: 30px
+				line-height: 30px
+				height: 30px
+				color: #333
+				white-space: nowrap
+				overflow: hidden
+				text-overflow: ellipsis
+
+	> .add-new
+		text-align: center
+		
+		.front-panel
+			opacity: .6
+			+transition(opacity .4s, background .4s, box-shadow .4s)
+
+			a
+				width: 230px
+				height: 300px
+				+box-sizing(border-box)
+
+				> strong
+					display: block
+					color: #999
+					font-family: 'Roboto'
+					font-size: 30px
+					line-height: 30px
+					height: 30px
+					white-space: nowrap
+					overflow: hidden
+					text-overflow: ellipsis
+
+				.icon-plus
+					margin-top: 60px
+					font-size: 100px
+					color: rgba(#000, .1)
+
+			&:hover
+				opacity: 1
+				background: #f6f6f6
+				+box-shadow(#fff 0px 0px 10px inset, rgba(#000, 0.1) 0px 0px 10px)
+
+.acquisition-session-config
+	max-width: 1000px
+	margin: 0 auto
+
+	> form
+		position: relative
+
+		> .control-group
+			margin: 25px 0
+
+			input[type=text]
+				width: 100%
+				font-size: 1.5em
+				padding: 10px 15px
+				height: auto
+				+box-sizing(border-box)
+
+			textarea
+				width: 100%
+				height: 55px
+				+box-sizing(border-box)
+
+		> .loading-overlay
+			position: absolute
+			top: 0px
+			left: 0px
+			bottom: 0px
+			right: 0px
+			text-align: center
+			opacity: 1
+			background: rgba(#fff, .7)
+			+border-radius($baseBorderRadius)
+			+transition(opacity .8s)
+
+			&.hidden
+				opacity: 0
+				+transition(opacity .3s)
+
+	> form + .row-fluid
+		margin: 25px 0
+
+	.available-collectors, .configured-collectors
+		> h1
+			font-size: $baseFontSize
+			margin: 0 0 5px
+			line-height: $baseLineHeight
+			font-weight: normal
+
+	> .form-actions
+		+box-sizing(border-box)
+
+		.session-save
+			min-width: 80px
+
+.configured-collectors > ul
+	padding: 0
+	margin: -15px 0 10px
+
+	> li
+		margin-top: 20px
+
+.collector-config
+	display: block
+
+	> .loading-overlay, .confirm-overlay
+		position: absolute
+		top: 0px
+		left: 0px
+		bottom: 0px
+		right: 0px
+		text-align: center
+		opacity: 1
+		+border-radius($baseBorderRadius)
+		+transition(opacity .8s)
+
+		&.hidden
+			opacity: 0
+			+transition(opacity .3s)
+
+	> .confirm-overlay
+		border: 1px solid #ddd
+		background: #f9f9f9
+		+box-shadow(#fff 0px 0px 10px inset)
+		+border-radius($baseBorderRadius)
+		+box-sizing(border-box)
+		+transition(opacity .1s)
+
+		> div
+			position: absolute
+			top: 0px
+			left: 0px
+			bottom: 0px
+			right: 0px
+			margin: auto
+			height: 65px
+			padding: 15px 10px 10px
+
+			button
+				margin: 0 5px
+				width: 80px
+
+	> .loading-overlay
+		border: 1px solid #eee
+		background: rgba(#fff, .7)
+
+	> form
+		margin: 0
+
+		.form-title
+			margin-top: 0
+			margin-left: -$formPadding
+			margin-right: -$formPadding
+			font-size: $baseFontSize
+			line-height: $baseLineHeight * 1.5
+			background: rgba(#000, .02)
+			color: $gray
+			padding-right: 80px
+			white-space: nowrap
+			overflow: hidden
+			text-overflow: ellipsis
+
+		input[type=text]
+			width: 100%
+
+	.back-panel
+		background: #fff
+		padding: 25px $formPadding $formPadding
+		+box-sizing(border-box)
+		+border-radius($borderRadiusLarge)
+		+box-shadow(rgba(#000, .2) 0px 0px 25px)
+
+		h1
+			font-size: 20px
+			font-weight: normal
+			line-height: 1.5em
+
+		.form-actions
+			margin: 25px (-$formPadding) (-$formPadding)
+			+border-bottom-radius($borderRadiusLarge)
+
+	&.loading .front-panel
+		height: 80px
+
+	.front-panel
+		display: block
+		margin: 0
+		padding: 0 $formPadding
+		border: 1px solid #ddd
+		background: #f9f9f9
+		position: relative
+		+box-shadow(#fff 0px 0px 10px inset)
+		+border-radius($baseBorderRadius)
+		+box-sizing(border-box)
+
+		.form-actions
+			margin-bottom: 0
+			+border-bottom-radius($baseBorderRadius)
+
+		input
+			// 2 * 4px padding + 1px borders
+			height: $baseLineHeight + 10px
+			+box-sizing(border-box)
+
+		p
+			text-align: right
+			margin: 0
+
+		ul.actions
+			position: absolute
+			top: 0
+			right: 0
+			font-size: 0
+			height: $baseLineHeight * 1.5
+
+			li
+				display: inline-block
+				height: 100%
+				line-height: $baseLineHeight * 1.5
+				border-left: 1px solid #ddd
+
+				i
+					font-size: $baseFontSize
+					line-height: $baseLineHeight * 1.5
+					padding: 0 9px
+
+				a
+					display: inline-block
+					height: 100%
+					color: #aaa
+					border-left: 1px solid #fff
+
+					&:hover
+						cursor: pointer
+						text-decoration: none
+						background: rgba(#999, .1)
+						color: #666
+						border-color: #f6f6f6
+
+
+// {{{ Available collectors widget
+.available-collectors
+	margin: 0
+	padding: 0
+
+	ul
+		padding: 0
+		margin: 0
+		border: 1px solid #ddd
+		+border-radius($baseBorderRadius)
+
+	li
+		display: block
+		border-top: 1px solid #ddd
+		padding: 5px 10px
+		background: #f9f9f9
+		cursor: move
+		+box-shadow(#fff 0px 0px 10px inset)
+
+		&:first-child
+			+border-top-radius($baseBorderRadius)
+			border-top: 0
+
+		&:last-child
+			+border-bottom-radius($baseBorderRadius)
+
+.collector-handle.drag-helper
+	min-width: 150px
+	z-index: 1
+	border: 1px solid #ddd
+	+border-radius($baseBorderRadius)
+	+box-sizing(border-box)
+// }}}
+
+// {{{ Collector placeholder
+.configured-collectors > ul > li.collector-config-placeholder
+	display: block
+	padding: 0
+	margin: 0
+	height: 0
+	font-size: 0
+	opacity: 0
+	+box-sizing(border-box)
+	+border-radius($borderRadiusLarge)
+
+	&:only-child, &.visible, &.activated
+		height: 85px
+		margin-top: 20px
+		border: 4px dashed #e6e6e6
+		opacity: 1
+		+transition-property(opacity, border-style, border-color, border-width, background)
+		+transition-duration(.5s, .3s, .3s, .1s, .3s)
+
+	&.active
+		border: 1px solid #ddd
+		background: #f9f9f9
+		+box-shadow(#fff 0px 0px 10px inset)
+// }}}

@@ -1,0 +1,59 @@
+form .help-block
+	font-size: $fontSizeSmall
+	line-height: 1.5em
+	color: lighten($textColor, 30%)
+
+.form-horizontal
+	.checkbox .help-block
+		margin-top: $baseLineHeight / 2 - 4px
+
+	.form-actions
+		padding-left: $horizontalComponentOffset + $formPadding
+
+	.form-title
+		padding-left: $horizontalComponentOffset + $formPadding
+
+.form-bordered
+	border: 1px solid $formBorder
+	padding: $formPadding
+	padding-bottom: 0
+	+box-sizing(border-box)
+	+border-radius($baseBorderRadius)
+
+	.form-actions, .form-title
+		margin-left: -$formPadding
+		margin-right: -$formPadding
+
+	.form-actions
+		margin-bottom: 0
+		+border-bottom-radius($baseBorderRadius)
+
+	.form-title
+		margin-top: -$formPadding
+		+border-top-radius($baseBorderRadius)
+
+form .form-title
+	background: $formTitleBackground
+	border-bottom: 1px solid $formBorder
+	color: $headingsColor
+	font-size: $fontSizeLarge
+	margin-bottom: $baseLineHeight - 1
+	padding: 0 $formPadding
+
+.control-label .asteriskField
+	font-size: 0
+	color: transparent
+	position: absolute
+
+	&:after
+		content: '✽'
+		padding-left: 3px
+		font-size: $fontSizeMini
+		color: $errorText
+
+.form-force-block-help
+	.help-inline
+		display: block
+		padding: 8px 0 6px
+		line-height: 1.2em
+

@@ -1,0 +1,8 @@
+<section class="available-collectors span4">
+	<h1>Available data collectors</h1>
+	<ul>
+		{%- for k, type in collectors_types.iteritems() %}
+		<li class="collector-handle" data-form_action="{% url "csat:acquisition:collector-create" collector=k, session_pk=session.pk %}">{{ type.name }}</li>
+		{%- endfor %}
+	</ul>
+</section>

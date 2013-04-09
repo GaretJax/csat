@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Page title</title>
+
+		{% assets "bootstrap_css" -%}
+		<link href="{{ ASSET_URL }}" rel="stylesheet" media="screen" />
+		{%- endassets %}
+		{% assets "screen_css" -%}
+		<link href="{{ ASSET_URL }}" rel="stylesheet" media="screen" />
+		{%- endassets %}
+	</head>
+	<body>
+		{% block navbar %}
+		<div class="navbar">
+			<div class="navbar-inner">
+				<a class="brand" href="/">CSAT</a>
+				<ul class="nav">
+					<li><a href="{% url 'csat:acquisition:session-index' %}">Data acquisition</a></li>
+					<li><a href="{% url 'csat:visualization:database-list' %}">Visualize</a></li>
+				</ul>
+			</div>
+		</div>
+		{% endblock %}
+
+		{% block content %}{% endblock %}
+
+		{% block scripts %}
+		<script src="http://code.jquery.com/jquery-latest.js"></script>
+		{% assets "jquery_ui" -%}
+		<script src="{{ ASSET_URL }}"></script>
+		{%- endassets %}
+		{% assets "jquery_websocket" -%}
+		<script src="{{ ASSET_URL }}"></script>
+		{%- endassets %}
+		{% assets "bootstrap_js" -%}
+		<script src="{{ ASSET_URL }}"></script>
+		{%- endassets %}
+		{% assets "master_js" -%}
+		<script src="{{ ASSET_URL }}"></script>
+		{%- endassets %}
+		{% endblock %}
+	</body>
+</html>
+

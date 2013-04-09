@@ -1,0 +1,36 @@
+{% extends "csat/acquisition/session/base.html" %}
+
+
+{% block content %}
+<ul class="session-list tiled-list">
+	{% for session in sessions %}
+	<li class="flip-box inactive session-details">
+		<div class="front-panel">
+			<strong>{{ session.name }}</strong>
+			
+			<ul class="detail-list">
+				<li><strong>{{ session.collectors.count() }}</strong> <span class="muted">collector{{ session.collectors.count()|pluralize }}</span></li>
+				<li class="btns">
+					<a class="btn" href="{% url "csat:acquisition:session-edit" pk=session.pk %}"><i class="icon-pencil"></i> Edit</a>
+					<a class="btn" href="{% url "csat:acquisition:session-run" pk=session.pk %}"><i class="icon-play"></i> Run</a>
+				</li>
+			</ul>
+		</div>
+		<div class="back-panel">
+			Back
+		</div>
+	</li>
+	{% endfor %}
+	<li class="flip-box inactive add-new">
+		<div class="front-panel">
+			<a href="{% url "csat:acquisition:session-create" %}">
+				<i class="icon-plus"></i>
+				<strong>Add new</strong>
+			</a>
+		</div>
+		<div class="back-panel">
+			Back
+		</div>
+	</li>
+</ul>
+{% endblock %}

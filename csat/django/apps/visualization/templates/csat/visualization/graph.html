@@ -1,0 +1,13 @@
+{% extends "csat/visualization/base.html" %}
+
+{% block content %}
+<div class="scene"></div>
+{% endblock %}
+
+
+{% block scripts %}
+{% assets "three_js" -%}
+<script src="{{ ASSET_URL }}"></script>
+{%- endassets %}
+{{ super() }}
+{% endblock %}
