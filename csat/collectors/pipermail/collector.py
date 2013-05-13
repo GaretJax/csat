@@ -2,207 +2,144 @@ import re
 import calendar
 import urlparse
 import gzip
+from collections import Counter
 from cStringIO import StringIO
 
-from dateutil import parser
-
-from twisted.internet import defer, reactor
-from twisted.web import client
+from dateutil import parser as date_parser
 
 from bs4 import BeautifulSoup
 
+import networkx as nx
 
-class Collector(object):
-    def collect(self):
-        pass
+from twisted.python import log
+from twisted.internet import defer, reactor, task
+from twisted.web import client
 
-
-class AsynchronousCollector(object):
-    def collect(self):
-        def p(res):
-            print "Done."
-            s = [0, 0]
-            for (status, mails) in res:
-                s[int(status)] += 1
-            print s
-            reactor.stop()
-
-        d = self.asyncCollect(reactor)
-        d.addCallback(p)
-        reactor.run()
+from csat.tasks import Task
 
 
-class Job(object):
-    def __init__(self, tasks):
-        self.tasks = tasks
-        self.eventHandlers = []
+class PipermailCollector(object):
 
-    def __iter__(self):
-        return iter(self.tasks)
-
-    def onUpdate(self, func):
-        self.eventHandlers.append(func)
-
-    def _fireOnUpdate(self, task):
-        for handler in self.eventHandlers:
-            handler(self, task)
-
-    def addTask(self, task):
-        self.tasks.append(task)
-        self._fireOnUpdate(task)
-
-
-class Task(object):
-
-    INACTIVE = 0
-    RUNNING = 1
-    PAUSED = 2
-    COMPLETED = 3
-    FAILED = 4
-    INDEFINITE = -1
-
-    STATUS_NAMES = {
-        INACTIVE: 'waiting',
-        RUNNING: 'running',
-        PAUSED: 'paused',
-        COMPLETED: 'completed',
-        FAILED: 'failed',
-        INDEFINITE: 'indefinite',
-    }
-
-    def __init__(self, name):
-        self.eventHandlers = []
-        self.name = name
-        self._status = self.INACTIVE
-        self._steps = 0
-        self._totalSteps = 1
-        self._statusText = ''
-        self._progress = self.INDEFINITE
-
-    def onUpdate(self, func):
-        self.eventHandlers.append(func)
-
-    def _fireOnUpdate(self):
-        for handler in self.eventHandlers:
-            handler(self)
-
-    def started():
-        pass
-
-    @property
-    def statusName(self):
-        return self.STATUS_NAMES[self._status]
-
-    @property
-    def status(self):
-        return self._status
-
-    @status.setter
-    def status(self, val):
-        self._status = val
-        self._fireOnUpdate()
-
-    @property
-    def statusText(self):
-        return self._statusText
-
-    @statusText.setter
-    def statusText(self, val):
-        self._statusText = val
-        self._fireOnUpdate()
-
-    @property
-    def progress(self):
-        return self._progress
-
-    @progress.setter
-    def progress(self, val):
-        self._progress = val
-        self._fireOnUpdate()
-
-    @property
-    def steps(self):
-        return self._totalSteps
-
-    @steps.setter
-    def steps(self, val):
-        self._totalSteps = val
-        self._progress = self._steps / self._totalSteps
-
-    def complete(self):
-        self._status = self.COMPLETED
-        self._progress = 1
-        self._steps = self._totalSteps
-        self._fireOnUpdate()
-
-    def makeStep(self):
-        self._status = self.RUNNING
-        self._steps += 1
-        self.progress = self._steps * 1.0 / self._totalSteps
-
-
-class ConsoleRunner(object):
-
-    def registerTask(self, job, task):
-        task.onUpdate(self.taskUpdated)
-
-    def taskUpdated(self, task):
-        import json, sys
-
-        print >>sys.stderr, json.dumps(('task.update', {
-            'name': task.name,
-            'status': task.status,
-            'statusText': task.statusText,
-            'progress': task.progress
-        }))
-
-        return
-
-        for task in self.job:
-            status = task.statusName
-            if task.progress == task.INDEFINITE:
-                bar = '-' * 80
-                percent = '      ?'
-            else:
-                ticks = int(80 * task.progress)
-                bar = '#' * ticks + '_' * (80 - ticks)
-                percent = ' {:5.1f}%'.format(task.progress * 100)
-            print '{:>30s}: {:80s}{} - {}'.format(task.name, bar, percent, status.capitalize())
-
-    def run(self):
-        collector = PipermailCollector()
-
-        self.job = collector.getJob()
-
-        for task in self.job:
-            self.registerTask(self.job, task)
-
-        self.job.onUpdate(self.registerTask)
-
-        collector.collect()
-
-
-class PipermailCollector(AsynchronousCollector):
-
-    DATE_REGEX = re.compile(r'({})\s(\d{{4}})'.format(
+    date_regex = re.compile(r'({})\s(\d{{4}})'.format(
         '|'.join(calendar.month_name).strip('|')))
 
-    SPLIT_REGEX = re.compile(r'From \S+ at \S+\s+\S+\s+\S+\s+\d\d?\s+(?:\d\d:)'
+    split_regex = re.compile(r'From \S+ at \S+\s+\S+\s+\S+\s+\d\d?\s+(?:\d\d:)'
                              '{2}\d\d \d{4}')
 
-    FROM_REGEX = re.compile(r'(\S+) at (\S+) \([^\)]+\)')
+    from_regex = re.compile(r'(\S+) at (\S+) \([^\)]+\)')
 
-    def __init__(self):
-        parallel_fetch = 100
-        self.url = 'http://twistedmatrix.com/pipermail/twisted-python/'
-        self.getPageQueue = defer.DeferredSemaphore(parallel_fetch)
+    def __init__(self, base_url, concurrency):
+        self.url = base_url
+        self.getPageQueue = defer.DeferredSemaphore(concurrency)
 
-        self.fetchTask = Task('Fetching data')
-        self.publishTask = Task('Publishing graph info')
-        self.job = Job([self.fetchTask, self.publishTask])
+    def run(self):
+        self.fetchTask = self.tasks.new('Fetching data')
+        self.parseTask = self.tasks.new('Parsing emails')
+        self.publishTask = self.tasks.new('Creating graph')
 
-    def getJob(self):
-        return self.job
+        self.setup_twisted_logging()
+
+        self.graph = nx.DiGraph()
+
+        def write_graphml(stream):
+            return nx.write_graphml(self.graph, stream)
+
+        self.graph.write_graphml = write_graphml
+
+        def stop(_):
+            reactor.stop()
+
+        def catchError(failure):
+            self.error = failure
+
+        def collect():
+            d = self.asyncCollect(reactor)
+            d.addErrback(catchError)
+            d.addCallback(stop)
+
+        self.error = None
+        reactor.callWhenRunning(collect)
+        reactor.run()
+
+        if self.error:
+            self.error.raiseException()
+
+        return self.graph
+
+    def setup_twisted_logging(self):
+        observer = log.PythonLoggingObserver()
+        observer.start()
+        log.defaultObserver.stop()
+
+        client.HTTPClientFactory.noisy = False
+
+    @defer.inlineCallbacks
+    def asyncCollect(self, reactor):
+        # Result is a list of results with an entry for each month
+        self.fetchTask.statusText = 'Retrieving data from {}...'.format(
+            self.url)
+        result = yield self.getSoup(self.url).addCallback(self.gotIndex)
+        self.fetchTask.setCompleted()
+
+        senders = {}
+        threads = {}
+
+        self.parseTask.steps = len(result)
+
+        for success, mails in result:
+            if success:
+                first = True
+                for mail in mails:
+                    if first:
+                        date = mail['headers']['date']
+                        text = 'Parsing email data for {}...'.format(
+                            date.strftime('%Y-%m'))
+                        self.parseTask.statusText = text
+                        first = False
+                    sender_id = mail['headers']['from']
+                    subject_id = mail['headers']['subject']
+                    senders.setdefault(sender_id, []).append(mail)
+                    threads.setdefault(subject_id, []).append(mail)
+            self.parseTask.makeStep()
+        self.parseTask.setCompleted()
+
+        self.publishTask.status = Task.RUNNING
+        self.publishTask.statusText = 'Building graph...'
+        self.publishTask.steps = len(senders) + len(threads)
+
+        def publishSenders(senders):
+            self.publishTask.statusText = 'Publishing nodes info...'
+            for sender, mails in senders.iteritems():
+                self.graph.add_node(sender, {
+                    'type': 'person',
+                    'mails_sent': len(mails)
+                })
+                self.publishTask.makeStep()
+                yield None
+
+            self.publishTask.statusText = 'Defining edge weights...'
+            interactions = Counter()
+            for subject, mails in threads.iteritems():
+                sorted_mails = sorted(mails, key=lambda x: x['headers']['date'])
+                sorted_posters = (m['headers']['from'] for m in sorted_mails[1:])
+                op = sorted_mails[0]['headers']['from']
+                replies = ((p, op) for p in sorted_posters if p != op)
+                for reply in replies:
+                    interactions[reply] += 1
+                self.publishTask.makeStep()
+                yield None
+
+            self.publishTask.statusText = 'Publishing edges info...'
+            self.publishTask.steps += len(interactions)
+            for (src, dst), count in interactions.iteritems():
+                self.graph.add_edge(src, dst, {
+                    'type': 'interaction',
+                    'count': count,
+                })
+                yield None
+
+            self.publishTask.setCompleted()
+        yield task.coiterate(publishSenders(senders))
 
     def getPage(self, url):
         url = str(url)
@@ -214,14 +151,12 @@ class PipermailCollector(AsynchronousCollector):
     def getGzipCompressed(self, url):
         def decompress(payload):
             stream = StringIO(payload)
-            return gzip.GzipFile(fileobj=stream).read()
+            try:
+                return gzip.GzipFile(fileobj=stream).read()
+            except IOError:
+                self.log.warning('{} is not a gzipped resource.'.format(url))
+                return payload
         return self.getPage(url).addCallback(decompress)
-
-    def asyncCollect(self, reactor):
-        def complete(_):
-            self.fetchTask.complete()
-            return _
-        return self.getSoup(self.url).addCallback(self.gotIndex).addCallback(complete)
 
     def gotIndex(self, page):
         deferreds = []
@@ -230,7 +165,7 @@ class PipermailCollector(AsynchronousCollector):
         for row in rows:
             cells = row.find_all('td')
             header = cells[0].get_text()
-            date = self.DATE_REGEX.match(header)
+            date = self.date_regex.match(header)
             if not date:
                 continue
             month, year = date.groups()
@@ -249,8 +184,14 @@ class PipermailCollector(AsynchronousCollector):
         return defer.DeferredList(deferreds)
 
     def gotMonth(self, page, year, month):
-        mails = self.SPLIT_REGEX.split(page)
-        return [self.parseMail(m) for m in mails[1:]]
+        for m in self.split_regex.split(page)[1:]:
+            try:
+                mail = self.parseMail(m)
+            except:
+                self.log.error('Could not parse mail in archive of month '
+                               '{}-{:02d}'.format(year, month))
+            else:
+                yield mail
 
     def parseMail(self, text):
         mail = text.strip().split('\n\n', 1)
@@ -280,23 +221,27 @@ class PipermailCollector(AsynchronousCollector):
         return (key.lower(), value)
 
     def parseHeader_FROM(self, val):
-        match = self.FROM_REGEX.match(val)
+        match = self.from_regex.match(val)
         email = '@'.join(match.groups())
         return email
 
     def parseHeader_DATE(self, val):
         try:
-            return parser.parse(val)
+            return date_parser.parse(val)
         except ValueError:
             # Try again using fuzzy parsing
-            return parser.parse(val, fuzzy=True)
+            try:
+                parsed = date_parser.parse(val, fuzzy=True)
+                self.log.info('Fuzzy parsing for date: \'{}\'\n'
+                              '        Resulting date: \'{:%a, %d %b %Y '
+                              '%H:%M:%S %z}\''.format(val, parsed))
+                return parsed
+            except ValueError:
+                self.log.warning('Could not parse date: \'{}\''.format(val))
+                raise
 
     def parseHeader_REFERENCES(self, val):
         return val.split(' ')
 
     def parseHeader_SUBJECT(self, val):
         return re.sub(r'^([a-zA-Z]{1,3}:\s+)+', '', val)
-
-
-if __name__ == '__main__':
-    ConsoleRunner().run()

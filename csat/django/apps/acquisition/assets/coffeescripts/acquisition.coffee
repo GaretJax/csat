@@ -239,23 +239,148 @@ $ ->
 		)
 	)
 
-$ ->
-	if not $('.task').size()
-		return
 
-	ws = $.websocket('ws://127.0.0.1:11111/', {
+class Task
+	@fromData: (data) ->
+		task = new Task
+		task.build(data.uuid).update(data)
+		return task
+
+	@fromElement: (el) ->
+		task = new Task
+		task.el = el
+		return task
+
+	appendTo: (container) ->
+		this.el.appendTo(container)
+		return this
+
+	setProgress: (progress) ->
+		status = this.el.data('status')
+		this.setProgressStatus(progress, status)
+		return this
+		
+	setStatus: (status) ->
+		progress = this.el.data('progress')
+		this.setProgressStatus(progress, status)
+		return this
+
+	setProgressStatus: (progress, status) ->
+		#if status != this.el.data('status'):
+		#	if status == 3  # Changed to success
+		#
+		#	else if status == 4  # Changed to failed
+
+		this.el.data('progress', progress)
+		this.el.data('status', status)
+
+		progress = progress * 100
+
+		$bar = $('.bar', this.el)
+		$progress = $('.progress', this.el)
+		$percentage = $('.percentage', this.el)
+
+		$progress.attr('class', 'progress')
+
+		if progress >= 0
+			$percentage.text("#{Math.round(progress)}%")
+			$bar.css('width', "#{progress}%")
+		else
+			$progress.addClass('progress-striped')
+			$percentage.text('')
+			$bar.css('width', '100%')
+
+		switch status
+			when 0
+				# Inactive, bar width is 0% and text is hidden
+				$bar.width(0)
+				$percentage.text('')
+			when 1  # Running
+				$progress.addClass('active')
+			when 2  # Paused
+				$progress.addClass('inactive')
+			when 3  # Success
+				$progress.removeClass('progress-striped')
+				$progress.addClass('progress-success')
+			when 4  # Failed
+				$progress.removeClass('progress-striped')
+				$progress.addClass('progress-danger')
+		return this
+
+	setName: (name) ->
+		$('> p:first-child', this.el).text(name)
+		return this
+
+	setStatusText: (text) ->
+		$('> p.status', this.el).text(text)
+		return this
+
+	update: (data) ->
+		this.setProgressStatus(data.progress, data.status)
+		this.setName(data.name)
+		this.setStatusText(data.statusText)
+		return this
+
+	build: (uuid, elementType='li')->
+		el = $("<#{elementType}/>")
+			.attr('id', "task-#{uuid}")
+			.addClass('task')
+		
+		$('<p/>').appendTo(el)
+		bar = $('<div/>').addClass('progress').appendTo(el)
+		indicator = $('<div/>').addClass('bar').appendTo(bar)
+		$('<span/>').addClass('percentage').appendTo(indicator)
+		$('<p/>').addClass('status').appendTo(el)
+		this.el = el
+		return this
+
+checkComplete = (container) ->
+	if not $('.task .progress:not(.progress-success)', container).size()
+		container.addClass('completed')
+		$('<i class="icon-ok icon-success icon-large"> </i>').prependTo(container)
+		dismiss = $('<button type="button" class="close" data-dismiss="collector-monitor">&times;</button>')
+		dismiss.insertAfter($('strong', container)).click(->
+			container.remove()
+		)
+	
+
+loadTasks = (server) ->
+	collector = $(this)
+	uuid = collector.data('uuid')
+	container = $('.tasks', collector)
+	
+	server.call('getTasksForCollector', uuid).done (tasks) ->
+		$.each(tasks, (i, data) ->
+			Task.fromData(data).appendTo(container)
+		)
+		checkComplete(collector)
+		server.call(
+			'broker.exclusiveQueueBind',
+			'tasks',
+			"task.#{uuid}.*",
+			server.callback((data) ->
+				item = $("#task-#{data.uuid}")
+				if not item.size()
+					Task.fromData(data).appendTo(container)
+				else
+					Task.fromElement(item).update(data)
+				checkComplete(collector)
+			),
+		)
+
+$ ->
+	if not $('.collector-monitor').size()
+		return
+	
+	ws = $.websocket("ws://#{window.location.hostname}:7002/", {
 		open: (->
-			ws.send('hello')
-			ws.send('hello')
-			ws.send('hello')
+			$('.collector-monitor').each(->
+				loadTasks.call(this, ws)
+			)
 		),
 		close: (->
 			console.log "close"
 		),
 		events: {
-			say: (->
-				console.log "say received"
-			)
 		}
 	})
-

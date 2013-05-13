@@ -1,5 +1,7 @@
 {% extends "csat/acquisition/session/base.html" %}
 
+{% block page_title %}Acquisition sessions{% endblock %}
+
 
 {% block content %}
 <ul class="session-list tiled-list">
@@ -10,9 +12,14 @@
 			
 			<ul class="detail-list">
 				<li><strong>{{ session.collectors.count() }}</strong> <span class="muted">collector{{ session.collectors.count()|pluralize }}</span></li>
+				<li class="status"><strong>{{ session.STATUSES[session.status] }}</strong> <span class="muted">status</span></li>
 				<li class="btns">
+					<a class="btn" href="{% url "csat:acquisition:session" pk=session.pk %}"><i class="icon-screenshot"></i> View</a>
+					{% if session.status == session.CONFIGURED %}
 					<a class="btn" href="{% url "csat:acquisition:session-edit" pk=session.pk %}"><i class="icon-pencil"></i> Edit</a>
-					<a class="btn" href="{% url "csat:acquisition:session-run" pk=session.pk %}"><i class="icon-play"></i> Run</a>
+					{% else %}
+					<button class="btn" disabled="disabled"><i class="icon-pencil"></i> Edit</button>
+					{% endif %}
 				</li>
 			</ul>
 		</div>

@@ -26,6 +26,12 @@
 		height: 30px
 		color: #333
 
+	li.status > strong
+		text-transform: uppercase
+		font-size: 20px
+		letter-spacing: -1px
+		font-weight: bold
+
 	.btns
 		font-size: 0
 		//opacity: 0
@@ -35,6 +41,7 @@
 		width: 48.5%
 		font-size: $baseFontSize
 		+box-sizing(border-box)
+		margin: 5px 0
 
 		& + .btn
 			margin-left: 3%
@@ -65,7 +72,7 @@
 
 	> .add-new
 		text-align: center
-		
+
 		.front-panel
 			opacity: .6
 			+transition(opacity .4s, background .4s, box-shadow .4s)
@@ -353,3 +360,125 @@
 		background: #f9f9f9
 		+box-shadow(#fff 0px 0px 10px inset)
 // }}}
+
+.collector-monitor
+	background: #f6f6f6
+	border: 1px solid #ddd
+	padding: 11px 10px 10px
+	+box-shadow(#fff 0px 0px 10px inset)
+	+border-radius($borderRadiusLarge)
+	+box-sizing(border-box)
+
+	& + .collector-monitor
+		margin-top: 20px
+
+	.close
+		float: right
+		margin-right: 7px
+		font-size: 2em
+
+
+	> strong
+		font-weight: normal
+		font-size: 1.2em
+		line-height: 1.5em
+		display: inline-block
+		margin: 0 0 0 7px
+
+	> .tasks
+		margin-top: 10px
+
+	&.completed
+		background: rgba(#bef3be, .3)
+		border-color: #b4e4b4
+		+box-shadow(#fff 0px 0px 5px 1px inset)
+
+		.close
+			display: block
+			color: #0e9800
+			opacity: 0.3
+
+			&:hover
+				opacity: 0.5
+
+		> strong
+			color: #0e9800
+
+		> .tasks
+			background: rgba(#fff, .8)
+
+.tasks
+	margin: 0
+	border: 1px solid #ccc
+	background: #ffffff
+	+border-radius($baseBorderRadius)
+	+box-shadow(#eee 0px 0px 10px inset)
+
+.task
+	display: block
+	padding: 11px 10px 6px
+	+box-sizing(border-box)
+
+	&:hover
+		background: rgba(#ffffcc, .5)
+
+	&:first-child
+		+border-top-radius($baseBorderRadius)
+
+	&:last-child
+		+border-bottom-radius($baseBorderRadius)
+
+	p:first-child
+		font-weight: bold
+		margin: 0
+		font-size: 1.1em
+		float: left
+		width: 190px
+		padding-right: 10px
+		text-align: right
+
+	.progress
+		margin-bottom: 0
+		background: #f0f0f0
+		border-bottom: 1px solid #fff
+		+box-shadow(rgba(0, 0, 0, 0.15) 0 1px 2px 0px inset)
+
+	.inactive
+		.bar
+			background-color: mix(#ccc, #aaa, 60%)
+			+background-image(linear-gradient(to bottom, #ccc, #aaa))
+
+		&.progress-striped .bar
+			background-color: #ccc
+			+background-image(linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent))
+
+	p.status
+		margin: 2px 0 0 200px
+		font-size: .9em
+		color: #aaa
+
+.task + .task
+	border-top: 1px solid #ddd
+
+.session-details
+	th
+		width: 100px
+		white-space: nowrap
+		text-align: right
+	td
+		width: 50%
+
+	tr:last-child
+		> *
+			border-bottom: 1px solid #ddd
+
+	tfoot
+		th
+			vertical-align: middle
+
+		form
+			display: inline
+
+		.btn
+			width: 100px
+			+box-sizing(border-box)

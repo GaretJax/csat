@@ -12,7 +12,6 @@ class Graph(models.Model):
         extension = 'png'
         name = slugify(self.name)
         return 'databases/{}.{}'.format(name, extension)
-
     thumbnail = models.ImageField(upload_to=get_upload_path)
 
     def __unicode__(self):

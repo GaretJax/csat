@@ -3,7 +3,7 @@ form .help-block
 	line-height: 1.5em
 	color: lighten($textColor, 30%)
 
-.form-horizontal
+.form-bordered.form-horizontal
 	.checkbox .help-block
 		margin-top: $baseLineHeight / 2 - 4px
 
@@ -12,6 +12,16 @@ form .help-block
 
 	.form-title
 		padding-left: $horizontalComponentOffset + $formPadding
+
+.simple-form
+	max-width: 600px
+	margin: 0 auto
+
+	&.form-horizontal .input-append
+		display: block
+
+	.form-actions
+		margin-top: 0
 
 .form-bordered
 	border: 1px solid $formBorder

@@ -4,7 +4,7 @@ from django.conf import settings
 
 from django_assets import Bundle, register
 
-from csat.django.apps.bootstrap.assets import css as bootstrap
+from csat.django.apps.bootstrap import assets as bootstrap
 
 
 shared = os.path.join(
@@ -29,18 +29,28 @@ css = Bundle(
     'sass/*/screen.sass',
     filters=['compass'],
     depends=['sass/*/*.sass'],
+)
+pygments = Bundle(
+    'css/pygments.css',
+)
+screen_css = Bundle(
+    pygments, css,
     output='styles/screen{}.css'.format(postfix),
 )
-register('screen_css', css)
-
+register('screen_css', screen_css)
 
 all_css = Bundle(
-    bootstrap, css,
+    bootstrap.css, css,
     filters=[],
     output='styles/master{}.css'.format(postfix),
 )
 register('all_css', all_css)
 
+jquery = Bundle(
+    'js/jquery-1.9.1.js',
+    output='scripts/jquery{}.js'.format(postfix),
+)
+register('jquery', jquery)
 
 jquery_ui = Bundle(
     'js/jquery-ui-1.10.2.custom.js',
@@ -48,11 +58,13 @@ jquery_ui = Bundle(
 )
 register('jquery_ui', jquery_ui)
 
-jquery_websocket = Bundle(
-    'js/jquery.websocket.js',
-    output='scripts/jquery.websocket{}.js'.format(postfix),
+libraries = Bundle(
+    'js/jquery-1.9.1.js',
+    bootstrap.js,
+    'js/jquery-ui-1.10.2.custom.js',
+    output='scripts/libs{}.js'.format(postfix),
 )
-register('jquery_websocket', jquery_websocket)
+register('libraries_js', libraries)
 
 js = Bundle(
     'coffeescripts/*.coffee',

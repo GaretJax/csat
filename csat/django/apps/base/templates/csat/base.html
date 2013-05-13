@@ -1,14 +1,14 @@
 <!DOCTYPE html>
+{% import 'macros.html' as lib %}
 <html lang="en">
 	<head>
-		<title>Page title</title>
+		<meta charset="utf-8" />
+		<title>{% block page_title %}{% endblock %} • CSAT</title>
 
-		{% assets "bootstrap_css" -%}
-		<link href="{{ ASSET_URL }}" rel="stylesheet" media="screen" />
-		{%- endassets %}
-		{% assets "screen_css" -%}
-		<link href="{{ ASSET_URL }}" rel="stylesheet" media="screen" />
-		{%- endassets %}
+		{% block styles -%}
+		{{ lib.loadcss("bootstrap_css") }}
+		{{ lib.loadcss("screen_css") }}
+		{%- endblock %}
 	</head>
 	<body>
 		{% block navbar %}
@@ -25,21 +25,10 @@
 
 		{% block content %}{% endblock %}
 
-		{% block scripts %}
-		<script src="http://code.jquery.com/jquery-latest.js"></script>
-		{% assets "jquery_ui" -%}
-		<script src="{{ ASSET_URL }}"></script>
-		{%- endassets %}
-		{% assets "jquery_websocket" -%}
-		<script src="{{ ASSET_URL }}"></script>
-		{%- endassets %}
-		{% assets "bootstrap_js" -%}
-		<script src="{{ ASSET_URL }}"></script>
-		{%- endassets %}
-		{% assets "master_js" -%}
-		<script src="{{ ASSET_URL }}"></script>
-		{%- endassets %}
-		{% endblock %}
+		{% block scripts -%}
+		{{ lib.loadjs("libraries_js") }}
+		{{ lib.loadjs("master_js") }}
+		{%- endblock %}
 	</body>
 </html>
 

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
@@ -39,6 +41,10 @@ class CollectorConfigForm(forms.ModelForm):
         self.helper.form_class = 'form-horizontal form-force-block-help'
         super(CollectorConfigForm, self).__init__(*args, **kwargs)
         self.fields.pop('session_config')
+
+    class Meta:
+        exclude = ('started', 'completed', 'running_instance_id', 'status',
+                   'result', 'received', 'configurator',)
 
     def get_advanced_layout(self):
         return None

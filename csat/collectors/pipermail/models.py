@@ -11,9 +11,7 @@ class PipermailConfig(DataCollectorConfig):
         (EVERYBODY_TO_AUTHOR, _('Everybody to thread author')),
     )
 
-    base_url = models.URLField(
-            _('Base archives URL'))
-    link_mode = models.PositiveSmallIntegerField(
-            _('Linking mode'),
-            choices=LINK_CHOICES,
-            default=EVERYBODY_TO_AUTHOR)
+    base_url = models.URLField(_('Base archives URL'))
+    link_mode = models.PositiveSmallIntegerField(_('Linking mode'),
+                                                 choices=LINK_CHOICES,
+                                                 default=EVERYBODY_TO_AUTHOR)

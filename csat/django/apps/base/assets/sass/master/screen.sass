@@ -1,3 +1,5 @@
+@charset "UTF-8"
+
 @import compass
 @import compass/css3/user-interface
 
@@ -70,3 +72,108 @@ body
 	form
 		margin: 0
 		padding-top: 20px
+
+h1
+	font-size: 30px
+
+h2
+	font-size: 22px
+
+.icon-success
+	color: #229922
+
+.icon-danger
+	color: #dd0000
+
+.file-viewer
+	background: #f3f3f3
+	border: 1px solid #ccc
+	padding: 6px
+	+border-radius($borderRadiusLarge)
+	+box-shadow(#fff 0px 0px 10px inset, #eee 0px 0px 6px)
+
+	.titlebar
+		border: 1px solid #ccc
+		padding: 0 15px
+		font-size: .9em
+		color: #666
+		background: #f9f9f9
+		margin-bottom: 6px
+		position: relative
+		+border-radius($baseBorderRadius)
+		+box-shadow(#fff 0px 0px 10px, #eee 0px 0px 4px inset)
+
+		i
+			font-size: 1.5em
+			vertical-align: -10%
+			padding-right: 7px
+
+		.btn-group
+			position: absolute
+			right: 5px
+			top: 5px
+
+			.btn
+				font-weight: bold
+				color: #555
+
+	h1
+		font-family: Monaco, Menlo, Consolas, "Courier New", monospace
+		font-size: 1em
+		margin: 0
+		padding: 0
+		display: inline
+
+	.tablewrapper
+		border: 1px solid #ccc
+		background: #fefefe
+		width: 100%
+		+box-sizing(border-box)
+		+border-radius($baseBorderRadius)
+		+box-shadow(#fff 0px 0px 10px, #eee 0px 0px 4px inset)
+
+
+.highlighttable
+	border-spacing: collapse
+	max-width: 100%
+	width: 100%
+	table-layout: fixed
+	+box-sizing(border-box)
+
+	pre
+		border: 0
+		background: 0
+		margin: 0
+		padding: 0
+		white-space: pre
+		line-height: 1.65em
+		word-wrap: normal
+
+	td
+		padding: 10px 15px
+
+	.linenos
+		white-space: pre
+		border-right: 1px solid #ddd
+		text-align: right
+		width: 30px
+
+		pre
+			color: rgba(#000, .3)
+
+		.linenodiv
+			padding: 0
+
+	.code
+		width: auto
+		padding: 0
+
+	.highlight
+		background: 0
+		max-width: 100%
+		padding: 10px 15px
+		float: left
+		white-space: pre
+		overflow-x: scroll
+		+box-sizing(border-box)
+

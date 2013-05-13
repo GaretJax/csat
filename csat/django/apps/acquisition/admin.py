@@ -5,7 +5,7 @@ from . import models
 
 
 class AcquisitionSessionConfigAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('id', 'name', 'started', 'temporary')
 admin.site.register(models.AcquisitionSessionConfig, AcquisitionSessionConfigAdmin)
 
 

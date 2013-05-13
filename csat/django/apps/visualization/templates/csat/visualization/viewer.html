@@ -1,0 +1,12 @@
+{% extends "csat/visualization/base.html" %}
+
+{% block page_title %}Graph viewer{% endblock %}
+
+{% block content %}
+<div class="scene" id="viewport"></div>
+{% endblock %}
+
+{% block scripts -%}
+	{{ lib.loadjs('three_js') }}
+	{{ super() }}
+{% endblock -%}

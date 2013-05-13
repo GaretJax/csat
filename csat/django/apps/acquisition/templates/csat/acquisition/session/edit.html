@@ -1,6 +1,9 @@
 {% extends "csat/acquisition/session/base.html" %}
 
 
+{% block page_title %}Edit "{{ session.name }}" acquisition session{% endblock %}
+
+
 {% block content %}
 
 <section class="acquisition-session-config">
@@ -36,12 +39,13 @@
 			</button>
 			<ul class="dropdown-menu">
 				<li><a class="session-save-link" href="{% url "csat:acquisition:session-run" pk=session.pk %}">Save and Run</a></li>
-				<li><a class="session-save-link" href="{% url "csat:acquisition:session-index" %}">Save and Back</li>
+				<li><a class="session-save-link" href="{% url "csat:acquisition:session" pk=session.pk %}">Save and Back to Details</a></li>
+				<li><a class="session-save-link" href="{% url "csat:acquisition:session-index" %}">Save and Back to List</a></li>
 			</ul>
 		</div>
 
-		<a class="btn" href="{% url "csat:acquisition:session-index" %}"><i class="icon-arrow-left"></i> Back to listing</a>
-		<a class="btn btn-danger" href="{% url "csat:acquisition:session-delete" pk=session.pk %}">Delete config</a>
+		<a class="btn" href="{% url "csat:acquisition:session" pk=session.pk %}"><i class="icon-arrow-left"></i> Back to details</a>
+		<a class="btn btn-danger" href="{% url "csat:acquisition:session-delete" pk=session.pk %}?prev={{ request.path }}">Delete config</a>
 	</div>
 </section>
 {% endblock %}

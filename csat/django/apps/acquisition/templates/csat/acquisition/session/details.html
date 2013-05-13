@@ -1,0 +1,167 @@
+{% extends "csat/acquisition/session/base.html" %}
+
+{% block page_title %}"{{ session.name }}" details{% endblock %}
+
+{% block content %}
+
+<h1>{{ session.name }} acquisition session</h1>
+
+<h2>Session summary</h2>
+
+<table class="session-details table" id="session={{ session.id }}-details">
+	<tr>
+		<th>Session name</th>
+		<td>{{ session.name }}</td>
+		<th>Status</th>
+		<td>{{ session.STATUSES[session.status] }}</td>
+	</tr>
+	<tr>
+		<th rowspan="2">Description</th>
+		<td rowspan="2">{{ session.description|markdown }}</td>
+		<th>Created</th>
+		<td>{{ session.created|date('Y-m-d, H:i:s')|default('—') }}</td>
+	</tr>
+	<tr>
+		<th>Started</th></th>
+		<td>{{ session.started|date('Y-m-d, H:i:s')|default('—') }}</td>
+	</tr>
+	<tr>
+		<th>Target database</th>
+		<td>{{ session.database.name|default('—') }}</td>
+		<th>Completed</th>
+		<td>{{ session.completed|date('Y-m-d, H:i:s')|default('—') }}</td>
+	</tr>
+	<tfoot>
+		<th>Available actions</th>
+		<td colspan="3">
+			{% if session.status == session.CONFIGURED %}
+			<a class="btn" href="{% url "csat:acquisition:session-edit" pk=session.pk %}"><i class="icon-edit"></i> Edit</a>
+			<form method="post" action="{% url "csat:acquisition:session-run" pk=session.pk %}">
+				{% csrf_token %}
+				<button type="submit" class="btn"><i class="icon-play"></i> Run</button>
+			</form>
+			{% else %}
+			<button disabled="disabled" class="btn"><i class="icon-edit"></i> Edit</button>
+			<button disabled="disabled" class="btn"><i class="icon-play"></i> Run</button>
+			{% endif %}
+			<button disabled="disabled" class="btn" data-href="{% url "csat:acquisition:session-edit" pk=session.pk %}" title="Create a new acquisition session with this same configuration"><i class="icon-copy"></i> Clone</button>
+			<a class="btn btn-danger" href="{% url "csat:acquisition:session-delete" pk=session.pk %}?prev={{ request.path }}"><i class="icon-trash"></i> Delete</a>
+			<form method="post" action="{% url "csat:acquisition:session-reset" pk=session.pk %}">
+				{% csrf_token %}
+				<button type="submit" class="btn btn-danger"><i class="icon-refresh"></i> Reset</button>
+			</form>
+		</td>
+	</tfoot>
+</table>
+
+{% if session.status == session.CONFIGURED %}
+<h2>Collectors execution status</h2>
+<div class="alert">
+	<strong>Not running!</strong> This acquisition session is not running. Run it now by using the appropriate button in the table above.
+</div>
+{% elif session.status == session.RUNNING %}
+<h2>Collectors execution status</h2>
+<div>
+	{% for collector in session.collectors.all() %}
+		{% if collector.status == collector.RUNNING %}
+		<div data-uuid="{{ collector.running_instance_id }}" class="collector-monitor">
+			<strong>{{ collector.get_collector_module().name }}</strong>
+			<ul class="tasks"></ul>
+		</div>
+		{% endif %}
+	{% endfor %}
+</div>
+{% endif %}
+
+<h2>Acquisition results</h2>
+{% if session.status == session.CONFIGURED %}
+	<div class="alert">
+		<strong>Not executed!</strong> This acquisition session was never executed. Results will be available once all collectors have been executed. Run it now by using the appropriate button in the table above.
+	</div>
+{% else %}
+	{% if session.status == session.RUNNING %}
+	<div class="alert alert-info">
+		<button type="button" class="close" data-dismiss="alert">&times;</button>
+		<strong>Still running!</strong> Some collectors are still running, the links below may not be accessible yet.
+	</div>
+	{% endif %}
+	<table class="table">
+		<thead>
+			<tr>
+				<th></th>
+				<th>Execution status</th>
+				<th>Started</th>
+				<th>Ended</th>
+				<th>Duration</th>
+				<th></th>
+			</tr>
+		</thead>
+		{% for collector in session.collectors.order_by('completed').all() %}
+		<tr>
+			<th scope="row">{{ collector.get_collector_module().name }}</th>
+			<td>
+				{%- if collector.status == collector.RUNNING -%}
+				<i class="icon-spinner muted icon-large icon-spin"></i> <span class="muted">&nbsp;Still running...</span>
+				{%- elif collector.status == collector.FAILED -%}
+				<i class="icon-warning-sign icon-danger icon-large"> &nbsp;Failed</i>
+				{%- elif collector.status == collector.COMPLETED -%}
+				<i class="icon-ok icon-success icon-large"> &nbsp;Completed</i>
+				{%- endif -%}
+			</td>
+			<td>{{ collector.started|date('Y-m-d, H:i:s') }}</td>
+			<td>
+				{%- if collector.status == collector.RUNNING -%}
+				—
+				{%- else -%}
+				{{ collector.completed|date('Y-m-d, H:i:s') }}
+				{%- endif -%}
+			</td>
+			<td>
+				{%- if collector.status == collector.RUNNING -%}
+				—
+				{%- else -%}
+				{{ lib.fmtdelta(collector.completed - collector.started) }}
+				{%- endif -%}
+			</td>
+			<td>
+				{%- if collector.status == collector.RUNNING -%}
+				<a href="{{ collector.get_postback_url() }}" class="btn btn-mini"><i class="icon-upload-alt"></i> Upload results</a>
+				{%- else -%}
+				<a href="{% url "csat:visualization:standalone-viewer" %}?url={% url "csat:acquisition:collector-view-results" session_pk=session.pk, collector_pk=collector.pk %}" class="btn btn-mini"><i class="icon-sitemap"></i> View graph</a>
+				<a href="{% url "csat:acquisition:collector-view-results" session_pk=session.pk, collector_pk=collector.pk, html='.html' %}" class="btn btn-mini"><i class="icon-file"></i> View graph file</a>
+				<a href="{% url "csat:acquisition:collector-view-log" session_pk=session.pk, collector_pk=collector.pk, html='.html' %}" class="btn btn-mini"><i class="icon-tasks"></i> View execution log</a>
+				{%- endif -%}
+			</td>
+
+			<!--td><code>{{ request.build_absolute_uri() }}</code></td-->
+			{% if collector.status == collector.RUNNING %}
+			{% elif collector.status == collector.FAILED %}
+			{% elif collector.status == collector.COMPLETED %}
+			{% endif %}
+		</tr>
+		{% endfor %}
+	</table>
+{% endif %}
+
+{#
+{% if session.status == session.CONFIGURED %}
+	{# Show the database selector widget and run button. }
+	<h2>Run this acquisition session</h2>
+	<p>This acquisition session is ready to be executed. Select a database from the form below and click on the button to start the data collection process.</p>
+	{% crispy db_form %}
+{% elif session.status == session.RUNNING %}
+	{# Show the current task status and subscribe for updates. }
+	<div>
+		{% for collector in session.collectors.all() %}
+		<div data-uuid="{{ collector.running_instance_id }}" class="collector-monitor">
+			<strong>{{ collector.get_collector_module().name }}</strong>
+			<ul class="tasks"></ul>
+		</div>
+		{% endfor %}
+	</div>
+{% elif session.status == session.COMPLETED %}
+	{# Show the summary of the acquisition session and link to the visualization
+	   interface. }
+	   {% endif %}
+	   #}
+{% endblock %}

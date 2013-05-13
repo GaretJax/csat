@@ -1,4 +1,4 @@
-from django.views.generic import list as list_view, detail
+from django.views.generic import list as list_view, detail, base
 from . import models
 
 
@@ -12,6 +12,12 @@ class DatabaseListingView(list_view.ListView):
         return context
 
 database_list = DatabaseListingView.as_view()
+
+
+class StandaloneRenderingView(base.TemplateView):
+    template_name = 'csat/visualization/viewer.html'
+
+standalone_viewer = StandaloneRenderingView.as_view()
 
 
 class GraphRenderingView(detail.DetailView):

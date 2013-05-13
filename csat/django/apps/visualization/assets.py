@@ -10,7 +10,7 @@ else:
 
 
 three_js = Bundle(
-    'js/three.js',
+    'js/three.js', 'js/OrbitControls.js',
     output='scripts/three{}.js'.format(postfix),
 )
 register('three_js', three_js)

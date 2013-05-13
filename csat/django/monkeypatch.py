@@ -30,6 +30,7 @@ def patch_assets_finder():
         def find(self, path):
             return super(AppDirectoriesFinder, self).find(path) or None
 
+    env.DjangoResolver.use_staticfiles = True
     env.finders = AppDirectoriesFinder('assets')
 
 
@@ -45,17 +46,19 @@ def patch_render_shortcut():
     _old_render_to_string = loader.render_to_string
 
     def _render(request, *args, **kwargs):
-        print '#' * 80
-        print repr(request.resolver_match)
         if 'current_app' not in kwargs:
-            kwargs['current_app'] = request.resolver_match.namespace
+            try:
+                kwargs['current_app'] = request.resolver_match.namespace
+            except AttributeError as e:
+                print e
         return _old_render(request, *args, **kwargs)
 
     def _render_to_string(request, *args, **kwargs):
-        print '#' * 80
-        print repr(request.resolver_match)
         if 'current_app' not in kwargs:
-            kwargs['current_app'] = request.resolver_match.namespace
+            try:
+                kwargs['current_app'] = request.resolver_match.namespace
+            except AttributeError as e:
+                print e
         return _old_render_to_string(request, *args, **kwargs)
 
     shortcuts.render = _render
@@ -74,4 +77,6 @@ def patch():
             except Exception as e:
                 print(u'Failed to apply monkey patch {}'.format(k))
                 print(u'{}: {}'.format(type(e), unicode(e)))
+                import traceback
+                traceback.print_exc()
                 raise

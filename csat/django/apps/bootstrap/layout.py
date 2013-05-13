@@ -15,3 +15,18 @@ class Title(layout.HTML):
     def __init__(self, text):
         html = u'<h1 class="form-title">{}</h1>'.format(text)
         super(Title, self).__init__(html)
+
+
+class IconButton(layout.HTML):
+    def __init__(self, text, icon, **attrs):
+        if 'css_class' in attrs:
+            attrs['class'] = attrs['css_class']
+            del attrs['css_class']
+
+        attrs = ['{}="{}"'.format(k, v) for k, v in attrs.iteritems()]
+        attrs = ' '.join(attrs)
+        if attrs:
+            attrs = ' ' + attrs
+
+        html = u'<button{}><i class="icon-{}"></i> {}</button>'.format(attrs, icon, text)
+        super(IconButton, self).__init__(html)
