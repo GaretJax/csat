@@ -31,10 +31,10 @@ def main():
         subparser.set_defaults(runner=runner)
         collectors.append(factory.key)
 
-    parser.add_argument('--list', action=ListAction, const=collectors)
+    parser.add_argument('-l', '--list', action=ListAction, const=collectors)
 
     args = parser.parse_args()
-    runner.run_as_subcommand(args)
+    args.runner.run_as_subcommand(args)
 
 
 if __name__ == '__main__':
