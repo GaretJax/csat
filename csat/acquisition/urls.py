@@ -2,7 +2,7 @@ from django.conf.urls import patterns, url
 
 
 urlpatterns = patterns(
-    'csat.django.apps.acquisition.views',
+    'csat.acquisition.views',
     url(r'^sessions/$', 'session_index', name='session-index'),
     url(r'^session/new/$', 'session_create', name='session-create'),
     url(r'^session/(?P<pk>\d+)/$', 'session_view', name='session'),

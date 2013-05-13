@@ -1,5 +1,5 @@
 from django.db import models
-from csat.django.apps.acquisition.models import DataCollectorConfig
+from csat.acquisition.models import DataCollectorConfig
 from django.utils.translation import ugettext_lazy as _
 
 

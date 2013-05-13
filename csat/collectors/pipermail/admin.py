@@ -1,4 +1,4 @@
-from csat.django.apps.acquisition import admin
+from csat.acquisition import admin
 
 
 class PipermailConfigAdmin(admin.DataCollectorConfigAdmin):
