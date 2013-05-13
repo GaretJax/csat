@@ -7,7 +7,6 @@ from pygments.lexers import get_lexer_for_mimetype, guess_lexer
 from pygments.formatters import HtmlFormatter
 
 
-
 register = template.Library()
 
 
@@ -19,4 +18,5 @@ def pygment(content, mime=None):
     formatter = HtmlFormatter(linenos='table')
     code = highlight(content, lexer, formatter)
     return Markup(code)
+
 register.filter('pygment', pygment)

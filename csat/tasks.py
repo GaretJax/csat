@@ -51,7 +51,9 @@ class VT100Terminal(object):
 
         def ioctl_GWINSZ(fd):
             try:
-                import fcntl, termios, struct
+                import fcntl
+                import termios
+                import struct
                 cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
                                                      '1234'))
             except:
@@ -118,13 +120,15 @@ class ConsoleTaskManager(TaskManager):
                 percent = '{:5.1f}%'.format(task.progress * 100)
 
             if bar_width < 0:
-                    text = ('{:>{name_width}}: {} - {:{status_width}s}'.format(
+                    text = (
+                        '{:>{name_width}}: {} - {:{status_width}s}'.format(
                             task.name,
                             percent,
                             status.capitalize(),
                             name_width=self.name_width,
                             status_width=self.status_width,
-                        ))
+                        )
+                    )
             else:
                 text = ('{:>{name_width}}: {:{bar_width}s} {} - '
                         '{:{status_width}s} - {}'.format(
@@ -227,8 +231,9 @@ class Task(object):
     @progress.setter
     def progress(self, val):
         self._progress = val
+        diff = abs(self._progress - self._oldProgress)
 
-        if abs(self._progress - self._oldProgress) > self.updateProgressThreshold:
+        if diff > self.updateProgressThreshold:
             self._updated()
             self._oldProgress = self._progress
 

@@ -19,7 +19,7 @@ class PipermailCollector(base.CollectorBase):
         return models.PipermailConfig
 
     def get_command(self, model):
-        return ['csat-collect', 'pipermail.collector', model.base_url,]
+        return ['csat-collect', 'pipermail', model.base_url, ]
 
     def build_parser(self, base):
         parser = super(PipermailCollector, self).build_parser(base)

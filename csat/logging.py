@@ -125,7 +125,8 @@ class PrintTo(object):
 
 class LevelDependentFormatter(logging.Formatter):
     def __init__(self, formats, default='%(message)'):
-        self.formatters = {k: logging.Formatter(v) for k, v in formats.iteritems()}
+        self.formatters = {k: logging.Formatter(v) for k, v in
+                           formats.iteritems()}
         self.default_formatter = logging.Formatter(default)
 
     def get_formatter(self, record):
@@ -187,7 +188,8 @@ class LoggingSubsystem(object):
         # Configure file logging
         if self.logfile:
             file_formatter = logging.Formatter("%(asctime)s - %(levelname)s - "
-                "%(name)s - %(message)s (%(pathname)s:%(lineno)d)")
+                                               "%(name)s - %(message)s "
+                                               "(%(pathname)s:%(lineno)d)")
 
             # Capture all logging output and write it to the specified log file
             self.file_handler = logging.FileHandler(self.logfile, 'w',
@@ -233,9 +235,11 @@ class LoggingSubsystem(object):
 
             print >>sys.__stderr__, ''
             if self.logfile:
-                print >>sys.__stderr__, ("%s exited with a non-zero exit "
-                        "status (%d). A complete log was stored in the %s "
-                        "file." % (sys.argv[0], status, self.logfile))
+                print >>sys.__stderr__, (
+                    "%s exited with a non-zero exit status (%d). A complete "
+                    "log was stored in the %s file." % (sys.argv[0], status,
+                                                        self.logfile))
             else:
-                print >>sys.__stderr__, ("%s exited with a non-zero exit "
-                        "status (%d)." % (sys.argv[0], status))
+                print >>sys.__stderr__, (
+                    "%s exited with a non-zero exit status (%d)." % (
+                        sys.argv[0], status))

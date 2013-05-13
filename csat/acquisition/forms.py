@@ -23,7 +23,8 @@ class AdvancedPanel(layout.Layout):
 
 class CollectorFormTitle(layout.Layout):
     def render(self, form, form_style, context):
-        html = u'<h1 class="form-title">{}</h1>'.format(context['collector'].name)
+        html = u'<h1 class="form-title">{}</h1>'.format(
+            context['collector'].name)
         return html
 
 
@@ -37,9 +38,7 @@ class SimpleLayoutMixin(object):
     def get_layout(self):
         elements = [layout.Field(name) for name in self.fields.iterkeys()]
         elements += [
-            bootstrap.FormActions(
-               layout.Submit('submit', _('Submit')),
-            )
+            bootstrap.FormActions(layout.Submit('submit', _('Submit')))
         ]
         return layout.Layout(*elements)
 
@@ -59,7 +58,7 @@ class AcquisitionSessionConfigForm(forms.ModelForm):
 
     class Meta:
         model = models.AcquisitionSessionConfig
-        exclude = ['temporary', 'created',]
+        exclude = ['temporary', 'created', ]
 
 
 class CollectorConfigForm(forms.ModelForm):
@@ -82,13 +81,15 @@ class CollectorConfigForm(forms.ModelForm):
         advanced_layout = self.get_advanced_layout()
 
         if advanced_layout:
-            advanced_link = '<li><a class="advanced" href="#"><i class="icon-wrench"></i>More options</a></li>'
+            advanced_link = (
+                '<li><a class="advanced" href="#"><i class="icon-wrench">'
+                '</i>More options</a></li>'
+            )
             advanced_panel = AdvancedPanel(
                 self.get_advanced_layout(),
-                bootstrap.FormActions(
-                    layout.Button('submit', _('Apply'), css_class='btn-primary'),
-                    ButtonLink(_('Cancel'), url='#'),
-                )
+                bootstrap.FormActions(layout.Button('submit', _('Apply'),
+                                                    css_class='btn-primary'),
+                                      ButtonLink(_('Cancel'), url='#'),)
             )
         else:
             advanced_link = ''
@@ -96,12 +97,10 @@ class CollectorConfigForm(forms.ModelForm):
 
         basic_panel = BasicPanel(
             CollectorFormTitle(),
-            layout.HTML("""
-                <ul class="actions">
-                    {}
-                    <li><a class="remove" href="#"><i class="icon-remove"></i>Remove</a></li>
-                </ul>
-                """.format(advanced_link)
+            layout.HTML(
+                '<ul class="actions">{}<li><a class="remove" href="#">'
+                '<i class="icon-remove"></i>Remove</a></li></ul>'.format(
+                    advanced_link)
             ),
             self.get_basic_layout()
         )

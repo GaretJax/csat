@@ -15,18 +15,16 @@ class Setup(object):
                 raise
             return ''
 
-
     @staticmethod
     def requirements(fname):
         """
-        Utility function to create a list of requirements from the output of the
-        pip freeze command saved in a text file.
+        Utility function to create a list of requirements from the output of
+        the pip freeze command saved in a text file.
         """
         packages = Setup.read(fname, fail_silently=True).split('\n')
         packages = (p.strip() for p in packages)
         packages = (p for p in packages if p and not p.startswith('#'))
         return list(packages)
-
 
     @staticmethod
     def get_files(*bases):
@@ -37,7 +35,7 @@ class Setup(object):
             basedir, _ = base.split('.', 1)
             base = os.path.join(os.path.dirname(__file__), *base.split('.'))
 
-            rem = len(os.path.dirname(base))  + len(basedir) + 2
+            rem = len(os.path.dirname(base)) + len(basedir) + 2
 
             for root, dirs, files in os.walk(base):
                 for name in files:
@@ -53,8 +51,8 @@ setup(
     url='https://github.com',
     license='MIT',
     packages=find_packages(),
-    package_dir = {'csat': 'csat'},
-    package_data = {
+    package_dir={'csat': 'csat'},
+    package_data={
         #'': [''],
     },
     install_requires=Setup.requirements('requirements.txt'),

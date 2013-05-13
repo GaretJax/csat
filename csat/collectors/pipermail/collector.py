@@ -122,9 +122,11 @@ class PipermailCollector(object):
             self.publishTask.statusText = 'Defining edge weights...'
             interactions = Counter()
             for subject, mails in threads.iteritems():
-                sorted_mails = sorted(mails, key=lambda x: x['headers']['date'])
-                sorted_posters = (m['headers']['from'] for m in sorted_mails[1:])
-                op = sorted_mails[0]['headers']['from']
+                def key(m):
+                    return ['headers']['date']
+                mails = sorted(mails, key=key)
+                sorted_posters = (m['headers']['from'] for m in mails[1:])
+                op = mails[0]['headers']['from']
                 replies = ((p, op) for p in sorted_posters if p != op)
                 for reply in replies:
                     interactions[reply] += 1
@@ -177,6 +179,7 @@ class PipermailCollector(object):
             archive = urlparse.urljoin(self.url, archive)
 
             d = self.getGzipCompressed(archive)
+
             def inc(r):
                 self.fetchTask.makeStep()
                 return r

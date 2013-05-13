@@ -26,7 +26,7 @@ class JsonRPCProxy(object):
         return Function(self, name)
 
     def call(self, name, *args):
-        request_id,  self.request_id =  self.request_id,  self.request_id + 1
+        request_id, self.request_id = self.request_id, self.request_id + 1
         payload = {
             'method': name,
             'params': args,
@@ -39,7 +39,8 @@ class JsonRPCProxy(object):
         try:
             return response['result']
         except KeyError:
-            raise RemoteJsonError('Remote JSON error: {}'.format(response['error']['code']))
+            raise RemoteJsonError('Remote JSON error: {}'.format(
+                response['error']['code']))
 
     def _send_json(self, payload):
         payload = json.dumps(payload)

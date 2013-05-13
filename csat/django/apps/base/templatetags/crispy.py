@@ -10,7 +10,7 @@ register = template.Library()
 
 
 class CrispyExtension(ext.Extension):
-    tags = {'crispy',}
+    tags = {'crispy', }
 
     def __init__(self, environment):
         super(CrispyExtension, self).__init__(environment)
@@ -37,7 +37,7 @@ class CrispyExtension(ext.Extension):
     @utils.contextfunction
     def _render(self, context, form, helper, caller):
         if helper is None:
-            helper = crispy.FormHelper() if not hasattr(form, 'helper') else form.helper
+            helper = getattr(form, 'helper', crispy.FormHelper())
 
         is_formset = isinstance(form, BaseFormSet)
         node_context = Context(context.get_all())
@@ -48,12 +48,14 @@ class CrispyExtension(ext.Extension):
 
         if helper and helper.layout:
             if not is_formset:
-                form.form_html = helper.render_layout(form, node_context, template_pack=crispy.TEMPLATE_PACK)
+                form.form_html = helper.render_layout(
+                    form, node_context, template_pack=crispy.TEMPLATE_PACK)
             else:
                 forloop = crispy.ForLoopSimulator(form)
                 for f in form.forms:
                     node_context.update({'forloop': forloop})
-                    form.form_html = helper.render_layout(f, node_context, template_pack=crispy.TEMPLATE_PACK)
+                    form.form_html = helper.render_layout(
+                        f, node_context, template_pack=crispy.TEMPLATE_PACK)
                     forloop.iterate()
 
         if is_formset:

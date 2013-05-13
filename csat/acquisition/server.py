@@ -104,6 +104,7 @@ class CollectorWrapper(object):
     def addTask(self, task):
         self.tasks[task.uuid] = task
         exchange = self.broker.exchange('tasks')
+
         def pub(task):
             exchange.pub(task, ('task', self.uuid, task.uuid))
         task.observe(pub)
@@ -154,7 +155,7 @@ class CsatCollectionServer(object):
 
         agent = client.Agent(reactor)
         d = agent.request("POST", url, headers,
-                             ProgressProducerWrapper(producer, upload_task))
+                          ProgressProducerWrapper(producer, upload_task))
 
         def done(res):
             upload_task.setCompleted()

@@ -28,5 +28,6 @@ class IconButton(layout.HTML):
         if attrs:
             attrs = ' ' + attrs
 
-        html = u'<button{}><i class="icon-{}"></i> {}</button>'.format(attrs, icon, text)
+        html = u'<button{}><i class="icon-{}"></i> {}</button>'.format(
+            attrs, icon, text)
         super(IconButton, self).__init__(html)

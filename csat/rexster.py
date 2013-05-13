@@ -264,7 +264,7 @@ class RexsterProtocol(protocol.Protocol, object):
     def sendMessage(self, message):
         body = message.encode()
         header = struct.pack(self.structFormat, self.protocolVersion,
-                              message.Meta.typeCode, len(body))
+                             message.Meta.typeCode, len(body))
         self.transport.write(header + body)
 
 
@@ -436,7 +436,6 @@ if __name__ == '__main__':
         def stopSession(_):
             proto.stopSession().addCallback(done)
 
-
         @defer.inlineCallbacks
         def sessionOpened(g):
             e = g.protocol.executeScript
@@ -484,7 +483,8 @@ if __name__ == '__main__':
             #yield getall()
             #yield commit()
 
-            #r = yield e('g.createKeyIndex(name, Vertex.class)', {'name': 'name'})
+            #r = yield e('g.createKeyIndex(name, Vertex.class)', {'name':
+            #'name'})
             #print r
             def no():
                 r = yield e('''
@@ -506,7 +506,6 @@ if __name__ == '__main__':
 
         graph = GraphProxy(proto)
         graph.bind('neo4jsample').addCallback(sessionOpened)
-
 
     def connect():
         endpoint = endpoints.TCP4ClientEndpoint(reactor, '10.10.10.140', 8184)

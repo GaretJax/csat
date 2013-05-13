@@ -47,7 +47,8 @@ class SessionRun(detail.SingleObjectMixin, base.View):
             try:
                 collector.running_instance_id = collector_server.runCollector(
                     collector.get_collector().get_command(collector),
-                    request.build_absolute_uri(collector.create_postback_url(save=False)),
+                    request.build_absolute_uri(collector.create_postback_url(
+                        save=False)),
                 )
             except Exception:
                 # TODO: Pass exception results to the function and save them
@@ -226,7 +227,7 @@ class CollectorConfigEdit(edit.UpdateView):
 
     def get_queryset(self):
         return models.DataCollectorConfig.objects.filter(
-                session_config=int(self.kwargs['session_pk']))
+            session_config=int(self.kwargs['session_pk']))
 
     def get_form_class(self):
         collector = self.object.get_collector()
@@ -265,7 +266,7 @@ class CollectorConfigRemove(edit.DeleteView):
         #time.sleep(random.random() * 5)
 
         return models.DataCollectorConfig.objects.filter(
-                session_config=int(self.kwargs['session_pk']))
+            session_config=int(self.kwargs['session_pk']))
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -360,7 +361,7 @@ class FileViewer(base.TemplateResponseMixin, base.View):
                 pass
             else:
                 response = HttpResponse(FileWrapper(self.file),
-                                    content_type=self.mime)
+                                        content_type=self.mime)
             if 'download' in self.request.GET:
                 dispo = 'attachment; filename={}'.format(self.filename)
             else:
@@ -396,7 +397,7 @@ class CollectorViewLog(FileViewer):
 
     def get_file(self):
         queryset = models.DataCollectorConfig.objects.filter(
-                session_config=int(self.kwargs['session_pk']))
+            session_config=int(self.kwargs['session_pk']))
         try:
             self.object = queryset.get(pk=int(self.kwargs['collector_pk']))
         except models.DataCollectorConfig.DoesNotExist:
@@ -409,7 +410,8 @@ collector_view_log = CollectorViewLog.as_view()
 
 class CollectorViewResults(FileViewer):
     def get_title(self):
-        return 'Collected graph for {}'.format(self.object.get_collector().name)
+        return 'Collected graph for {}'.format(
+            self.object.get_collector().name)
 
     def get_mime(self):
         return 'application/xml'
@@ -420,7 +422,7 @@ class CollectorViewResults(FileViewer):
 
     def get_file(self):
         queryset = models.DataCollectorConfig.objects.filter(
-                session_config=int(self.kwargs['session_pk']))
+            session_config=int(self.kwargs['session_pk']))
         try:
             self.object = queryset.get(pk=int(self.kwargs['collector_pk']))
         except models.DataCollectorConfig.DoesNotExist:
