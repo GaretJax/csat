@@ -1,34 +1,30 @@
 from django.contrib import admin
-from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin
 
-from . import models
+from polymorphic.admin import PolymorphicParentModelAdmin
+from polymorphic.admin import PolymorphicChildModelAdmin
+
+from csat.acquisition import get_collectors, models
 
 
 class AcquisitionSessionConfigAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'started', 'temporary')
-admin.site.register(models.AcquisitionSessionConfig, AcquisitionSessionConfigAdmin)
+admin.site.register(models.AcquisitionSessionConfig,
+                    AcquisitionSessionConfigAdmin)
 
 
-class DataCollectorConfigAdmin(PolymorphicChildModelAdmin):
+class _DataCollectorConfigAdmin(PolymorphicChildModelAdmin):
     base_model = models.DataCollectorConfig
 
 
-class PipermailConfigAdmin(DataCollectorConfigAdmin):
-    pass
-
-
-class SvnConfigAdmin(DataCollectorConfigAdmin):
-    pass
-
-
-class DataCollectorConfigAdmin(PolymorphicParentModelAdmin):
+class GenericDataCollectorConfigAdmin(PolymorphicParentModelAdmin):
     base_model = models.DataCollectorConfig
 
     def get_child_models(self):
-        from csat.collectors.pipermail.models import PipermailConfig
-        from csat.collectors.svn.models import SvnConfig
-        return (
-            (PipermailConfig, PipermailConfigAdmin),
-            (SvnConfig, SvnConfigAdmin),
-        )
-admin.site.register(models.DataCollectorConfig, DataCollectorConfigAdmin)
+        def iter_chldren():
+            for collector in get_collectors():
+                yield (collector.get_model(), _DataCollectorConfigAdmin)
+
+        return tuple(iter_chldren())
+
+admin.site.register(models.DataCollectorConfig,
+                    GenericDataCollectorConfigAdmin)
