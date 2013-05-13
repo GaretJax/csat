@@ -6,6 +6,8 @@ from django.utils.translation import ugettext_lazy as _
 from crispy_forms import layout, helper, bootstrap
 from csat.django.apps.bootstrap.layout import ButtonLink
 
+from . import models
+
 
 class BasicPanel(layout.Layout):
     def render(self, *args, **kwargs):
@@ -25,12 +27,39 @@ class CollectorFormTitle(layout.Layout):
         return html
 
 
-class Collector(object):
-    def get_config_form_class(self):
-        return self.config_form_class
+class SimpleLayoutMixin(object):
+    def __init__(self, *args, **kwargs):
+        super(SimpleLayoutMixin, self).__init__(*args, **kwargs)
+        self.helper = helper.FormHelper()
+        self.helper.layout = self.get_layout()
+        self.helper.form_class = 'form-horizontal form-bordered'
 
-    def get_model(self):
-        return self.model
+    def get_layout(self):
+        elements = [layout.Field(name) for name in self.fields.iterkeys()]
+        elements += [
+            bootstrap.FormActions(
+               layout.Submit('submit', _('Submit')),
+            )
+        ]
+        return layout.Layout(*elements)
+
+
+class AcquisitionSessionConfigForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        self.helper = helper.FormHelper()
+        self.helper.layout = self.get_layout()
+        super(AcquisitionSessionConfigForm, self).__init__(*args, **kwargs)
+
+    def get_layout(self):
+        return layout.Layout(
+            layout.Field('name'),
+            layout.Field('description'),
+        )
+
+    class Meta:
+        model = models.AcquisitionSessionConfig
+        exclude = ['temporary', 'created',]
 
 
 class CollectorConfigForm(forms.ModelForm):
@@ -78,3 +107,17 @@ class CollectorConfigForm(forms.ModelForm):
         )
 
         return layout.Layout(basic_panel, advanced_panel)
+
+
+class ResultsUploadForm(SimpleLayoutMixin, forms.ModelForm):
+
+    successful = forms.BooleanField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(ResultsUploadForm, self).__init__(*args, **kwargs)
+        self.fields['graph'].allow_empty_file = True
+        self.fields['output'].allow_empty_file = True
+
+    class Meta:
+        model = models.DataCollectorConfig
+        fields = ('graph', 'output')
