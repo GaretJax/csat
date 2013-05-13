@@ -70,3 +70,7 @@ class FactoryBase(object):
     @abc.abstractmethod
     def build_collector(self, args):
         pass
+
+
+class CollectorBase(ConfiguratorBase, FactoryBase):
+    pass
