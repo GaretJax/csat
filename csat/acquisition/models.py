@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse
 
 from polymorphic import PolymorphicModel
 
-from csat.django.apps.visualization.models import Graph
+from csat.acquisition import get_collector
 
 
 graph_fs = FileSystemStorage(location=settings.GRAPHS_ROOT)
@@ -42,8 +42,6 @@ class AcquisitionSessionConfig(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     started = models.DateTimeField(null=True, blank=True)
     completed = models.DateTimeField(null=True, blank=True)
-
-    database = models.ForeignKey(Graph, blank=True, null=True, unique=True)
 
     @property
     def status(self):
@@ -156,5 +154,4 @@ class DataCollectorConfig(PolymorphicModel):
         })
 
     def get_collector(self):
-        from csat.acquisition import get_collector
         return get_collector(self.configurator)
