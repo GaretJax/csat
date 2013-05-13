@@ -1,24 +1,17 @@
 from __future__ import absolute_import
 
 import abc
-import argparse
 
 from zope.interface import implementer, Interface
 
 from twisted.plugin import IPlugin
 
-from polymorphic.base import PolymorphicModelBase
 
-
-class ICollectorRunner(Interface):
+class ICollectorFactory(Interface):
     pass
 
 
 class ICollectorConfigurator(Interface):
-    pass
-
-
-class _ConfiguratorMeta(PolymorphicModelBase, abc.ABCMeta):
     pass
 
 
@@ -47,8 +40,8 @@ class ConfiguratorBase(object):
         pass
 
 
-@implementer(ICollectorRunner, IPlugin)
-class RunnerBase(object):
+@implementer(ICollectorFactory, IPlugin)
+class FactoryBase(object):
     """
     Base data collection class to implement an actual collector runner.
 
@@ -57,8 +50,7 @@ class RunnerBase(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def build_parser(self, base):
-        parser = argparse.ArgumentParser(parents=[base])
+    def build_parser(self, parser):
         parser.add_argument('--version', action='version',
                             version='{} {}'.format(self.name, self.version))
         return parser
@@ -76,5 +68,5 @@ class RunnerBase(object):
         pass
 
     @abc.abstractmethod
-    def run(self, args):
+    def build_collector(self, args):
         pass

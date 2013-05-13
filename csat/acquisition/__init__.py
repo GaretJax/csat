@@ -12,3 +12,7 @@ def get_collector(key):
 
 def get_collectors():
     return plugin.getPlugins(base.ICollectorConfigurator, collectors)
+
+
+def get_factories():
+    return plugin.getPlugins(base.ICollectorFactory, collectors)

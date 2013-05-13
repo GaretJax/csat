@@ -12,9 +12,7 @@ class RunnerBase(object):
     def __init__(self, collector):
         self.collector = collector
 
-    def build_base_parser(self):
-        parser = argparse.ArgumentParser(add_help=False)
-
+    def build_base_parser(self, parser):
         parser.add_argument('-v', '--verbose', default=list(),
                             action='append_const', const=1, help='Increments '
                             'the verbosity (can be used multiple times).')
@@ -26,6 +24,13 @@ class RunnerBase(object):
                             'graph to be written to stdout. The default is to'
                             ' write the graph to stdout.')
 
+        return parser
+
+    def build_parser(self, parser=None):
+        if parser is None:
+            parser = argparse.ArgumentParser()
+        base_parser = self.build_base_parser(parser)
+        parser = self.collector.build_parser(base_parser)
         return parser
 
     @abc.abstractmethod
@@ -45,39 +50,43 @@ class RunnerBase(object):
         logger.increment_verbosity(len(args.verbose) - len(args.quiet))
         #logger.capture_stdout()
 
+    def run_as_subcommand(self, args):
+        self.logger = self.get_logger()
+        self.args = args
+        self._run()
 
     def run(self, arguments=None):
         if not arguments:
             arguments = sys.argv[1:]
 
-        logger = self.get_logger()
+        self.logger = self.get_logger()
+        self.args = self.build_parser().parse_args(arguments)
+        self._run()
 
+    def _run(self):
         # Build argument parser and parse command line
-        base_parser = self.build_base_parser()
-        parser = self.collector.build_parser(base_parser)
-        self.args = parser.parse_args(arguments)
-
-        self.configure_logger(logger, self.args)
-
-        self.collector.log = logger.get_logger('collector')
-        self.collector.tasks = self.get_task_manager()
+        self.configure_logger(self.logger, self.args)
 
         # Execute command
-        self.log = logger.get_logger('runner')
+        self.log = self.logger.get_logger('runner')
         self.log.info('Starting collection process...')
         try:
-            graph = self.collector.run(self.args)
+            collector = self.collector.build_collector(
+                self.get_task_manager(),
+                self.logger.get_logger('collector'),
+                self.args
+            )
+            graph = collector.run()
             self.write_graph(graph)
         except Exception:
-            self.log.critical('Collection process failed',
-                                                 exc_info=True)
+            self.log.critical('Collection process failed', exc_info=True)
             res = 1
         else:
             self.log.info('Collection process terminated.')
             res = 0
 
         # Shutdown logging
-        logger.stop(res)
+        self.logger.stop(res)
 
         return res
 
@@ -91,8 +100,8 @@ class RunnerBase(object):
 
 
 class ConsoleRunner(RunnerBase):
-    def build_base_parser(self):
-        parser = super(ConsoleRunner, self).build_base_parser()
+    def build_base_parser(self, parser):
+        parser = super(ConsoleRunner, self).build_base_parser(parser)
 
         parser.add_argument('-p', '--no-progress', action='store_true',
                             help='Disable interactive progress reporting.')
@@ -112,13 +121,16 @@ class RemoteRunner(RunnerBase):
         return tasks.JsonRPCTaskManager(sys.__stderr__)
 
 
-def get_runner(*args, **kwargs):
+def get_runner_class():
     if sys.__stderr__.isatty():
         runner_class = ConsoleRunner
     else:
         runner_class = RemoteRunner
+    return runner_class
 
-    return runner_class(*args, **kwargs)
+
+def get_runner(*args, **kwargs):
+    return get_runner_class(*args, **kwargs)
 
 
 if __name__ == '__main__':

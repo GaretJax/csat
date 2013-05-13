@@ -1,5 +1,3 @@
-import sys
-
 from csat.acquisition import base
 
 
@@ -23,25 +21,28 @@ class PipermailConfigurator(PipermailInfoMixin, base.ConfiguratorBase):
         return models.PipermailConfig
 
     def get_command(self, model):
-        # TODO: Switch to the runner
-        return [sys.executable, '-m', 'csat.collectors.pipermail.collector',
-                model.base_url,]
+        return ['csat-collect', 'pipermail.collector', model.base_url,]
 
 
-class PipermailRunner(PipermailInfoMixin, base.RunnerBase):
+class PipermailFactory(PipermailInfoMixin, base.FactoryBase):
     def build_parser(self, base):
-        parser = super(PipermailRunner, self).build_parser(base)
+        parser = super(PipermailFactory, self).build_parser(base)
         parser.add_argument('base_url')
         parser.add_argument('-c', '--concurrency', default=16, type=int,
                             help='Number of concurrent HTTP requests used '
                             'when collecting data (default: 16).')
         return parser
 
-    def run(self, args):
+    def build_collector(self, task_manager, logger, args):
         from .collector import PipermailCollector
-        collector = PipermailCollector(args.url, args.concurrency)
-        return collector.run()
+        return PipermailCollector(task_manager, logger, args.base_url,
+                                  args.concurrency)
 
 
-runner = PipermailRunner()
+factory = PipermailFactory()
 configurator = PipermailConfigurator()
+
+
+if __name__ == '__main__':
+    from csat.acquisition.runner import get_runner
+    get_runner(factory).run()

@@ -28,7 +28,9 @@ class PipermailCollector(object):
 
     from_regex = re.compile(r'(\S+) at (\S+) \([^\)]+\)')
 
-    def __init__(self, base_url, concurrency):
+    def __init__(self, task_manager, logger, base_url, concurrency):
+        self.tasks = task_manager
+        self.log = logger
         self.url = base_url
         self.getPageQueue = defer.DeferredSemaphore(concurrency)
 
