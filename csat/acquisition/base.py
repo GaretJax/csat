@@ -42,6 +42,10 @@ class ConfiguratorBase(object):
     def name(self):
         pass
 
+    @abc.abstractproperty
+    def key(self):
+        pass
+
 
 @implementer(ICollectorRunner, IPlugin)
 class RunnerBase(object):
@@ -58,6 +62,10 @@ class RunnerBase(object):
         parser.add_argument('--version', action='version',
                             version='{} {}'.format(self.name, self.version))
         return parser
+
+    @abc.abstractproperty
+    def key(self):
+        pass
 
     @abc.abstractproperty
     def version(self):
