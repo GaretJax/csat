@@ -46,7 +46,7 @@ class SessionRun(detail.SingleObjectMixin, base.View):
         for collector in self.object.collectors.all():
             try:
                 collector.running_instance_id = collector_server.runCollector(
-                    collector.get_command(),
+                    collector.get_collector().get_command(collector),
                     request.build_absolute_uri(collector.create_postback_url(save=False)),
                 )
             except Exception:
@@ -126,7 +126,6 @@ class SessionEditor(edit.UpdateView):
         #time.sleep(random.random() * 5)
         context = super(SessionEditor, self).get_context_data(**kwargs)
         context['collectors_types'] = acquisition.get_collectors()
-        print context['collectors_types']
         return context
 
     def form_valid(self, form):

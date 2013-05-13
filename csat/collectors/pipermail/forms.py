@@ -1,12 +1,12 @@
 from crispy_forms import layout
 
-from csat.acquisition import django
+from csat.acquisition import forms
 from . import models
 
 
-class ConfigForm(django.CollectorConfigForm):
+class ConfigForm(forms.CollectorConfigForm):
 
-    class Meta(django.CollectorConfigForm.Meta):
+    class Meta(forms.CollectorConfigForm.Meta):
         model = models.PipermailConfig
 
     def get_basic_layout(self):

@@ -27,7 +27,7 @@
 	</tr>
 	<tr>
 		<th>Target database</th>
-		<td>{{ session.database.name|default('—') }}</td>
+		<td>—</td>
 		<th>Completed</th>
 		<td>{{ session.completed|date('Y-m-d, H:i:s')|default('—') }}</td>
 	</tr>
@@ -98,7 +98,7 @@
 		</thead>
 		{% for collector in session.collectors.order_by('completed').all() %}
 		<tr>
-			<th scope="row">{{ collector.get_collector_module().name }}</th>
+			<th scope="row">{{ collector.get_collector().name }}</th>
 			<td>
 				{%- if collector.status == collector.RUNNING -%}
 				<i class="icon-spinner muted icon-large icon-spin"></i> <span class="muted">&nbsp;Still running...</span>
