@@ -1,3 +1,13 @@
+try:
+    import git
+except ImportError:
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter('always')
+        warnings.warn('No git module found, the pygit collector will not be '
+                      'available', ImportWarning)
+    git = None
+
 from csat.acquisition import base
 
 
@@ -17,12 +27,14 @@ class GitPythonCollector(base.FactoryBase):
 
     def build_collector(self, task_manager, logger, args):
         from .collector import GitPythonCollector
-        return GitPythonCollector(task_manager, logger, args.repo_path)
+
+        repo = git.Repo(args.repo_path)
+        return GitPythonCollector(task_manager, logger, repo)
 
 
-git_python_collector = GitPythonCollector()
+if git is not None:
+    git_python_collector = GitPythonCollector()
 
-
-if __name__ == '__main__':
-    from csat.acquisition.runner import get_runner
-    get_runner(git_python_collector).run()
+    if __name__ == '__main__':
+        from csat.acquisition.runner import get_runner
+        get_runner(git_python_collector).run()
