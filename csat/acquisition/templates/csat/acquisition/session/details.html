@@ -65,7 +65,7 @@
 	{% for collector in session.collectors.all() %}
 		{% if collector.status == collector.RUNNING %}
 		<div data-uuid="{{ collector.running_instance_id }}" class="collector-monitor">
-			<strong>{{ collector.get_collector_module().name }}</strong>
+			<strong>{{ collector.get_collector().name }}</strong>
 			<ul class="tasks"></ul>
 		</div>
 		{% endif %}
@@ -154,7 +154,7 @@
 	<div>
 		{% for collector in session.collectors.all() %}
 		<div data-uuid="{{ collector.running_instance_id }}" class="collector-monitor">
-			<strong>{{ collector.get_collector_module().name }}</strong>
+			<strong>{{ collector.get_collector().name }}</strong>
 			<ul class="tasks"></ul>
 		</div>
 		{% endfor %}

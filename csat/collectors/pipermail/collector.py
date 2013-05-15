@@ -123,7 +123,7 @@ class PipermailCollector(object):
             interactions = Counter()
             for subject, mails in threads.iteritems():
                 def key(m):
-                    return ['headers']['date']
+                    return m['headers']['date']
                 mails = sorted(mails, key=key)
                 sorted_posters = (m['headers']['from'] for m in mails[1:])
                 op = mails[0]['headers']['from']

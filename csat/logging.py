@@ -177,6 +177,8 @@ class LoggingSubsystem(object):
                 "%(pathname)s:%(lineno)d - %(message)s",
             })
 
+        logging.captureWarnings(True)
+
         # All console output not explicitly directed to the user should be
         # a log message instead
         self.console_handler = logging.StreamHandler(sys.__stderr__)
