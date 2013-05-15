@@ -62,10 +62,11 @@ class LevelColoringFormatter(logging.Formatter):
                                                     color=color), 1)
 
         #return '\n'.join((l + r for r in r))
-        if len(r) == 1:
-            return l + r[0]
-        else:
-            return l + r[0] + '\n' + '\n'.join((' ' * ll + r for r in r[1:]))
+        if r:
+            if len(r) == 1:
+                return l + r[0]
+            else:
+                return l + r[0] + '\n' + '\n'.join((' ' * ll + r for r in r[1:]))
 
 
 class StdioOnnaStick(object):

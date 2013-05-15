@@ -48,7 +48,7 @@ class RunnerBase(object):
     def configure_logger(self, logger, args):
         # Set the verbosity level
         logger.increment_verbosity(len(args.verbose) - len(args.quiet))
-        #logger.capture_stdout()
+        logger.capture_stdout()
 
     def run_as_subcommand(self, args):
         self.logger = self.get_logger()
