@@ -1,41 +1,104 @@
 import os
-import pprint
+import datetime
+
+import networkx as nx
 
 from csat.paths import PathWalker
 from . import parser
 
 
-class FakeGraphML(object):
+class ModuleNotFound(KeyError):
+    pass
+
+
+class ModuleAlreadyTracked(KeyError):
+    pass
+
+
+def timestamp_to_iso(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).isoformat()
+
+
+class DependencyGraph(object):
+    def __init__(self):
+        self.modules = {}
+        self._nextid = 1
+        self.graph = nx.DiGraph()
+
+    def add_module(self, commit, module):
+        try:
+            self.modules[module][2] = True
+        except KeyError:
+            self.modules[module] = [self._nextid, set(), True]
+            self.graph.add_node(self._nextid, {
+                'label': module.get_import_path(),
+                # TODO: Nor really true
+                'date_added': timestamp_to_iso(commit.committed_date),
+                'commit_added': commit.hexsha,
+                'author_added': commit.author.email,
+            })
+            self._nextid += 1
+        else:
+            # TODO: Update commit metadata
+            pass
+
+    def id(self, module):
+        return self.modules[module][0]
+
+    def node(self, module):
+        return self.graph.node[self.modules[module][0]]
+
+    def edge(self, source, target):
+        return self.graph.edge[self.id(source)][self.id(target)]
+
+    def remove_module(self, commit, module):
+        spec = self.modules[module]
+        assert not spec[1]
+        spec[2] = False
+        node = self.node(module)
+        node['date_removed'] = timestamp_to_iso(commit.committed_date)
+        node['commit_removed'] = commit.hexsha
+        node['author_removed'] = commit.author.email
+
+    def get_dependencies(self, module):
+        try:
+            _, deps, active = self.modules[module]
+            if not active:
+                raise ModuleNotFound(module)
+        except KeyError:
+            raise ModuleNotFound(module)
+        return deps
+
+    def add_dependency(self, commit, source, target):
+        self.add_module(commit, target)
+        self.get_dependencies(source).add(target)
+        self.graph.add_edge(self.id(source), self.id(target), {
+            'date_added': timestamp_to_iso(commit.committed_date),
+            'commit_added': commit.hexsha,
+            'author_added': commit.author.email,
+        })
+
+    def remove_dependency(self, commit, source, target):
+        self.get_dependencies(source).remove(target)
+        edge = self.edge(source, target)
+        edge['date_removed'] = timestamp_to_iso(commit.committed_date)
+        edge['commit_removed'] = commit.hexsha
+        edge['author_removed'] = commit.author.email
+
     def write_graphml(self, stream):
-        return
-
-
-class Module(object):
-    def __init__(self, name):
-        self.name = name
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def __eq__(self, other):
-        return isinstance(other, Module) and self.name == other.name
-
-
-class PathActionString(str):
-    deleted = False
-    created = False
+        return nx.write_graphml(self.graph, stream)
 
 
 class GitPythonCollector(object):
 
-    def __init__(self, task_manager, logger, repo):
+    def __init__(self, task_manager, logger, repo, rev, package):
         self.tasks = task_manager
         self.log = logger
         self.repo = repo
         self.git = repo.git
-        self.rev = 'trunk'#'63be1f698a60d572fc6436cbc0af9e0fcff9713e..a0626e'
-        self.package_name = 'twisted'
-        self.modules = {}
+        self.rev = rev
+        self.package_name = package
+        self.graph = DependencyGraph()
 
     def run(self):
         self.commit_task = self.tasks.new('Parsing commits')
@@ -58,7 +121,7 @@ class GitPythonCollector(object):
             # We are at the first commit
             count -= 1
         self.git.checkout(commit.hexsha, force=True)
-        self.log.info('First commit is [{}]: {}'.format(commit.hexsha[:6],
+        self.log.info(u'First commit is [{}]: {}'.format(commit.hexsha[:6],
                                                         commit.summary))
         self.handle_initial_commit(commit)
         self.commit_task.makeStep()
@@ -67,6 +130,8 @@ class GitPythonCollector(object):
         commits = self.repo.iter_commits(self.rev, max_count=count,
                                          reverse=True)
         for i, commit in enumerate(commits):
+            self.log.debug(u'Analyzing commit [{}]: {}'.format(
+                commit.hexsha[:6], commit.summary))
             self.commit_task.statusText = 'Analyzing commit {}/{}...'.format(
                 i + 1, count)
             self.git.checkout(commit.hexsha, force=True)
@@ -76,10 +141,10 @@ class GitPythonCollector(object):
 
         # Cleanup
         self.commit_task.setCompleted()
-        self.log.info('Last commit is [{}]: {}'.format(commit.hexsha[:6],
+        self.log.info(u'Last commit is [{}]: {}'.format(commit.hexsha[:6],
                                                        commit.summary))
 
-        return FakeGraphML()
+        return self.graph
 
     def get_modified_paths(self, commit):
         for diff in commit.diff():
@@ -98,19 +163,23 @@ class GitPythonCollector(object):
                 deleted = False
                 path = diff.b_blob.path
 
-            # Keep only python files
-            if not path.endswith('.py'):
-                continue
+            if self.filter_path(path):
+                yield path, deleted
 
-            # Keep only files in the twisted package
-            if not path.startswith('{}/'.format(self.package_name)):
-                continue
+    def filter_path(self, path):
+        # Keep only python files
+        if not path.endswith('.py'):
+            return False
 
-            # Exclude test files
-            if '/test/' in path or path.endswith('test.py'):
-                continue
+        # Keep only files in the twisted package
+        if not path.startswith('{}/'.format(self.package_name)):
+            return False
 
-            yield path, deleted
+        # Exclude test files
+        if '/test/' in path or path.endswith('test.py'):
+            return False
+
+        return True
 
     def get_dependent_modules(self, commit, module):
         imports = module.get_imports()
@@ -142,7 +211,7 @@ class GitPythonCollector(object):
         return depends_on
 
     def handle_initial_commit(self, commit):
-        walker = PathWalker(self.repo.working_dir, fullpath=True)
+        walker = PathWalker(self.repo.working_dir, fullpath=False)
         walker.filter(filename=r'.*\.py')
         walker.exclude(directory=r'\.git')
         walker.exclude(directory=r'test')
@@ -150,12 +219,12 @@ class GitPythonCollector(object):
 
         def create_iter(paths):
             for p in paths:
-                yield p, False
+                if self.filter_path(p):
+                    yield p, False
 
         self.handle_commit(commit, create_iter(walker.walk()))
 
     def handle_commit(self, commit, paths):
-        delta = 0
         changed = False
 
         for path, deleted in paths:
@@ -167,39 +236,29 @@ class GitPythonCollector(object):
             else:
                 dependencies = self.get_dependent_modules(commit, module)
 
-            if module in self.modules:
-                removed = self.modules[module] - dependencies
-                added = dependencies - self.modules[module]
-            else:
+            try:
+                old_dependencies = self.graph.get_dependencies(module)
+                removed = old_dependencies - dependencies
+                added = dependencies - old_dependencies
+            except ModuleNotFound:
                 assert not deleted
+                self.log.debug('Created {!r}'.format(module))
+                self.graph.add_module(commit, module)
                 added = dependencies
-                removed = []
-
-            for dep in removed:
-                self.remove_dependency(commit, module, dep)
-
-            for dep in added:
-                self.add_dependency(commit, module, dep)
-
-            delta += len(added) - len(removed)
+                removed = set()
 
             if deleted:
                 self.log.debug('Deleted {!r}'.format(module))
-                del self.modules[module]
-            else:
-                self.modules[module] = dependencies
 
-        if changed:
-            self.log.debug(u'Commit {} delta: {}, {}'.format(
-                commit.hexsha[:6], delta, commit.summary))
-        else:
+            for dep in removed:
+                self.graph.remove_dependency(commit, module, dep)
+
+            for dep in added:
+                self.graph.add_dependency(commit, module, dep)
+
+            if deleted:
+                self.graph.remove_module(commit, module)
+
+        if not changed:
             self.log.debug('No source files modified, skipping commit {}'
                            .format(commit.hexsha[:6]))
-
-    def add_dependency(self, commit, source, target):
-        #print '  + ', source, '->', target
-        pass
-
-    def remove_dependency(self, commit, source, target):
-        #print '  - ', source, '->', target
-        pass
