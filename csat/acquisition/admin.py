@@ -12,7 +12,7 @@ admin.site.register(models.AcquisitionSessionConfig,
                     AcquisitionSessionConfigAdmin)
 
 
-class _DataCollectorConfigAdmin(PolymorphicChildModelAdmin):
+class DataCollectorConfigAdmin(PolymorphicChildModelAdmin):
     base_model = models.DataCollectorConfig
 
 
@@ -22,7 +22,7 @@ class GenericDataCollectorConfigAdmin(PolymorphicParentModelAdmin):
     def get_child_models(self):
         def iter_chldren():
             for collector in get_collectors():
-                yield (collector.get_model(), _DataCollectorConfigAdmin)
+                yield (collector.get_model(), DataCollectorConfigAdmin)
 
         return tuple(iter_chldren())
 

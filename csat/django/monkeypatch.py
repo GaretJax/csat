@@ -1,6 +1,3 @@
-import os
-
-
 def patch_assets_finder():
     """
     Monkey patch django_assets in order to retrieve assets
