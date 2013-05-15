@@ -81,13 +81,18 @@ class RunnerBase(object):
         except Exception:
             self.log.critical('Collection process failed', exc_info=True)
             res = 1
+        except KeyboardInterrupt:
+            # TODO: Should we setup a signal handler for this for when we
+            # run native code?
+            print ''
+            self.log.warn('SIGINT Received, terminating execution...')
+            res = 1
         else:
             self.log.info('Collection process terminated.')
             res = 0
 
         # Shutdown logging
         self.logger.stop(res)
-
         return res
 
     def write_graph(self, graph):
