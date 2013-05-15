@@ -1,7 +1,9 @@
 import os
 import datetime
-
+import git
 import networkx as nx
+import tempfile
+import shutil
 
 from csat.paths import PathWalker
 from . import parser
@@ -91,60 +93,85 @@ class DependencyGraph(object):
 
 class GitPythonCollector(object):
 
-    def __init__(self, task_manager, logger, repo, rev, package):
+    def __init__(self, task_manager, logger, repo_url, rev, package):
         self.tasks = task_manager
         self.log = logger
-        self.repo = repo
-        self.git = repo.git
+        self.repo_url = repo_url
+        self.clone_path = None
+        self.git = None
         self.rev = rev
         self.package_name = package
         self.graph = DependencyGraph()
 
+    def init_repo(self):
+        self.checkout_task.statusText = ('Cloning repository to temporary '
+                                         'location...')
+        self.checkout_task.status = self.checkout_task.RUNNING
+        self.clone_path = tempfile.mkdtemp(prefix='csat-pygit-')
+        self.log.info('Cloning to temporary directory at {!r}'.format(
+            self.clone_path))
+        self.repo = git.Repo.clone_from(self.repo_url, self.clone_path)
+        self.checkout_task.setCompleted()
+        self.git = self.repo.git
+
     def run(self):
+        # Init tasks
         self.commit_task = self.tasks.new('Parsing commits')
+        self.checkout_task = self.tasks.new('Source checkout')
+
+        try:
+            self.init_repo()
+            self.bootstrap()
+            self.analyze()
+        finally:
+            # Cleanup
+            self.log.info('Removing temporary repository at {}'.format(
+                self.clone_path))
+            shutil.rmtree(self.clone_path)
+
+        return self.graph
+
+    def bootstrap(self):
         self.commit_task.statusText = 'Getting commit summary...'
 
-        count = 0
+        self.count = 0
         for commit in self.repo.iter_commits(self.rev):
-            count += 1
+            self.count += 1
 
-        if not count:
+        if not self.count:
             raise ValueError('The provided revision specifier does not '
                              'contain any commits.')
 
-        self.commit_task.steps = count + 1
+        self.commit_task.steps = self.count + 1
 
         # Checkout and analyze initial (specified) commit
         try:
             commit = commit.parents[0]
         except IndexError:
             # We are at the first commit
-            count -= 1
+            self.count -= 1
         self.git.checkout(commit.hexsha, force=True)
-        self.log.info(u'First commit is [{}]: {}'.format(commit.hexsha[:6],
-                                                        commit.summary))
+        self.log.info('First commit is [{}]: {}'.format(
+            commit.hexsha[:6], commit.summary.encode('utf-8')))
         self.handle_initial_commit(commit)
         self.commit_task.makeStep()
 
-        # Iteratively analyze all remaining commits
-        commits = self.repo.iter_commits(self.rev, max_count=count,
+    def analyze(self):
+        commits = self.repo.iter_commits(self.rev, max_count=self.count,
                                          reverse=True)
         for i, commit in enumerate(commits):
-            self.log.debug(u'Analyzing commit [{}]: {}'.format(
-                commit.hexsha[:6], commit.summary))
+            self.log.debug('Analyzing commit [{}]: {}'.format(
+                commit.hexsha[:6], commit.summary.encode('utf-8')))
             self.commit_task.statusText = 'Analyzing commit {}/{}...'.format(
-                i + 1, count)
+                i + 1, self.count)
             self.git.checkout(commit.hexsha, force=True)
             paths = self.get_modified_paths(commit.parents[0])
             self.handle_commit(commit, paths)
             self.commit_task.makeStep()
 
-        # Cleanup
         self.commit_task.setCompleted()
-        self.log.info(u'Last commit is [{}]: {}'.format(commit.hexsha[:6],
-                                                       commit.summary))
-
-        return self.graph
+        self.log.info('Last commit is [{}]: {}'.format(
+            commit.hexsha[:6], commit.summary.encode('utf-8')))
 
     def get_modified_paths(self, commit):
         for diff in commit.diff():

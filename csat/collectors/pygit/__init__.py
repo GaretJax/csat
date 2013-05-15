@@ -22,8 +22,9 @@ class GitPythonCollector(base.CollectorBase):
 
     def build_parser(self, base):
         parser = super(GitPythonCollector, self).build_parser(base)
-        parser.add_argument('repo_path')
-        parser.add_argument('revspec', default='master', nargs='?')
+        parser.add_argument('--revspec', '-r', default='master')
+        parser.add_argument('repo_url')
+        #rev: 'trunk' #'63be1f698a60d572fc6436cbc0af9e0fcff9713e..a0626e'
         parser.add_argument('package_name')
         return parser
 
@@ -36,17 +37,13 @@ class GitPythonCollector(base.CollectorBase):
         return models.Config
 
     def get_command(self, model):
-        return ['csat-collect', self.key, model.repo_url, model.revspec,
+        return ['csat-collect', self.key, '-r', model.revspec, model.repo_url,
                 model.package]
 
     def build_collector(self, task_manager, logger, args):
         from .collector import GitPythonCollector
-
-        #rev: 'trunk' #'63be1f698a60d572fc6436cbc0af9e0fcff9713e..a0626e'
-
-        repo = git.Repo(args.repo_path)
-        return GitPythonCollector(task_manager, logger, repo, args.revspec,
-                                  args.package_name)
+        return GitPythonCollector(task_manager, logger, args.repo_url,
+                                  args.revspec, args.package_name)
 
 
 if git is not None:
