@@ -14,7 +14,7 @@ from csat.acquisition import base
 __version__ = '0.1.0'
 
 
-class GitPythonCollector(base.FactoryBase):
+class GitPythonCollector(base.CollectorBase):
 
     name = 'Git + Python dependencies analyzer'
     key = 'pygit'
@@ -26,6 +26,18 @@ class GitPythonCollector(base.FactoryBase):
         parser.add_argument('revspec', default='master', nargs='?')
         parser.add_argument('package_name')
         return parser
+
+    def get_form(self):
+        from . import forms
+        return forms.ConfigForm
+
+    def get_model(self):
+        from . import models
+        return models.Config
+
+    def get_command(self, model):
+        return ['csat-collect', self.key, model.repo_url, model.revspec,
+                model.package]
 
     def build_collector(self, task_manager, logger, args):
         from .collector import GitPythonCollector
