@@ -1,11 +1,13 @@
 import os
 import datetime
 import git
-import networkx as nx
 import tempfile
 import shutil
 
+from lxml import etree
+
 from csat.paths import PathWalker
+from csat.graphml.builder import GraphMLDocument, Attribute
 from . import parser
 
 
@@ -25,15 +27,34 @@ class DependencyGraph(object):
     def __init__(self):
         self.modules = {}
         self._nextid = 1
-        self.graph = nx.DiGraph()
+        self._init_graph()
+
+    def _init_graph(self):
+        self.graph = GraphMLDocument()
+
+        self.graph.attr(Attribute.NODE, 'domain')
+        self.graph.attr(Attribute.NODE, 'package')
+        self.graph.attr(Attribute.ALL, 'type')
+
+        self.graph.attr(Attribute.ALL, 'date_added')
+        self.graph.attr(Attribute.ALL, 'commit_added')
+        self.graph.attr(Attribute.ALL, 'author_added')
+        self.graph.attr(Attribute.ALL, 'date_removed')
+        self.graph.attr(Attribute.ALL, 'commit_removed')
+        self.graph.attr(Attribute.ALL, 'author_removed')
+
+        self.subgraph = self.graph.digraph().node(1, {
+            'domain': 'components'
+        }).subgraph()
 
     def add_module(self, commit, module):
         try:
             self.modules[module][2] = True
         except KeyError:
             self.modules[module] = [self._nextid, set(), True]
-            self.graph.add_node(self._nextid, {
-                'label': module.get_import_path(),
+            self.subgraph.node(self._nextid, {
+                'package': module.get_import_path(),
+                'type': 'package',
                 # TODO: Nor really true
                 'date_added': timestamp_to_iso(commit.committed_date),
                 'commit_added': commit.hexsha,
@@ -48,10 +69,11 @@ class DependencyGraph(object):
         return self.modules[module][0]
 
     def node(self, module):
-        return self.graph.node[self.modules[module][0]]
+        return self.subgraph.nodes[self.modules[module][0]]
 
     def edge(self, source, target):
-        return self.graph.edge[self.id(source)][self.id(target)]
+        edges = self.subgraph.edges[self.node(source), self.node(target)]
+        return edges[-1]
 
     def remove_module(self, commit, module):
         spec = self.modules[module]
@@ -73,8 +95,10 @@ class DependencyGraph(object):
 
     def add_dependency(self, commit, source, target):
         self.add_module(commit, target)
+
         self.get_dependencies(source).add(target)
-        self.graph.add_edge(self.id(source), self.id(target), {
+        self.subgraph.edge(self.node(source), self.node(target), {
+            'type': 'dependency',
             'date_added': timestamp_to_iso(commit.committed_date),
             'commit_added': commit.hexsha,
             'author_added': commit.author.email,
@@ -88,7 +112,12 @@ class DependencyGraph(object):
         edge['author_removed'] = commit.author.email
 
     def write_graphml(self, stream):
-        return nx.write_graphml(self.graph, stream)
+        return self.graph.to_file(stream)
+        doc = self.graph.graphml()
+        docstr = etree.tostring(
+            doc, xml_declaration=True, encoding='utf-8', pretty_print=True
+        ).strip()
+        stream.write(docstr)
 
 
 class GitPythonCollector(object):

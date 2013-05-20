@@ -10,6 +10,8 @@ from django.core.urlresolvers import reverse
 
 from polymorphic import PolymorphicModel
 
+from csat import graphml
+from csat.django.fields import XMLFileField
 from csat.acquisition import get_collector
 
 
@@ -42,6 +44,11 @@ class AcquisitionSessionConfig(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     started = models.DateTimeField(null=True, blank=True)
     completed = models.DateTimeField(null=True, blank=True)
+
+    def get_graph_upload_path(self, filename):
+        return 'graphs/{}-merged.graphml'.format(self.id)
+    graph = models.FileField(upload_to=get_graph_upload_path, storage=graph_fs,
+                             blank=True, null=True)
 
     @property
     def status(self):
@@ -91,7 +98,9 @@ class DataCollectorConfig(PolymorphicModel):
     def get_graph_upload_path(self, filename):
         return 'graphs/{}-{}.graphml'.format(self.id, self.result_id)
     graph = models.FileField(upload_to=get_graph_upload_path, storage=graph_fs,
-                             blank=True, null=True)
+                         blank=True,
+                         null=True)
+    #schema=graphml.get_schema_path(),
 
     def get_log_upload_path(self, filename):
         return 'logs/{}-{}.log'.format(self.id, self.result_id)
