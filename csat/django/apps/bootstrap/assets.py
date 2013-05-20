@@ -1,25 +1,13 @@
-from django.conf import settings
-
-from django_assets import Bundle, register
+from csat.django.apps.base.bundles import make_css_bundle, make_js_bundle
 
 
-if getattr(settings, 'ASSETS_VERSIONS', True):
-    postfix = '-%(version)s'
-else:
-    postfix = ''
-
-
-css = Bundle(
+css = make_css_bundle('bootstrap', [
     'sass/bootstrap-include.sass',
-    filters=['compass'],
-    output='styles/bootstrap{}.css'.format(postfix),
-)
-register('bootstrap_css', css)
+], filters=['compass'])
 
 
-js = Bundle(
-    'js/bootstrap-tooltip.js', 'js/bootstrap-*.js', 'js/bootstrap-popover.js',
-    filters=[],
-    output='scripts/bootstrap{}.js'.format(postfix),
-)
-register('bootstrap_js', js)
+js = make_js_bundle('bootstrap', [
+    'js/bootstrap-tooltip.js',
+    'js/bootstrap-*.js',
+    'js/bootstrap-popover.js',
+])

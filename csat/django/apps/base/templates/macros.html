@@ -1,11 +1,11 @@
 {%- macro loadjs(name) -%}
-{%- assets name -%}
+{%- assets '{}_js'.format(name) -%}
 <script src="{{ ASSET_URL }}"></script>
 {%- endassets -%}
 {%- endmacro %}
 
 {%- macro loadcss(name, media='screen') -%}
-{%- assets name -%}
+{%- assets '{}_css'.format(name) -%}
 <link href="{{ ASSET_URL }}" rel="stylesheet" media="{{ media }}" />
 {%- endassets -%}
 {%- endmacro %}

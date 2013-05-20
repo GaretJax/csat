@@ -6,8 +6,8 @@
 		<title>{% block page_title %}{% endblock %} • CSAT</title>
 
 		{% block styles -%}
-		{{ lib.loadcss("bootstrap_css") }}
-		{{ lib.loadcss("screen_css") }}
+		{{ lib.loadcss("bootstrap") }}
+		{{ lib.loadcss("screen") }}
 		{%- endblock %}
 	</head>
 	<body>
@@ -26,8 +26,8 @@
 		{% block content %}{% endblock %}
 
 		{% block scripts -%}
-		{{ lib.loadjs("libraries_js") }}
-		{{ lib.loadjs("master_js") }}
+		{{ lib.loadjs("base_libs") }}
+		{{ lib.loadjs("master") }}
 		{%- endblock %}
 	</body>
 </html>

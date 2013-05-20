@@ -1,16 +1,18 @@
-from django.conf import settings
-
-from django_assets import Bundle, register
+from csat.django.apps.base import bundles
 
 
-if getattr(settings, 'ASSETS_VERSIONS', True):
-    postfix = '-%(version)s'
-else:
-    postfix = ''
+three_js = bundles.make_js_bundle('three', [
+    'js/three.js',
+    'js/OrbitControls.js',
+])
+
+master = bundles.make_js_bundle('visualization', [
+    bundles.coffee('views'),
+    bundles.coffee('viewer.old'),
+    bundles.coffee('visualization'),
+], filters=['coffeescript'])
 
 
-three_js = Bundle(
-    'js/three.js', 'js/OrbitControls.js',
-    output='scripts/three{}.js'.format(postfix),
-)
-register('three_js', three_js)
+master = bundles.make_js_bundle('viewer', [
+    bundles.coffee('viewer'),
+], filters=['coffeescript'])
