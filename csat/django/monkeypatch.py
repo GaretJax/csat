@@ -56,10 +56,11 @@ def patch_render_shortcut():
                 kwargs['current_app'] = request.resolver_match.namespace
             except AttributeError as e:
                 print e
+                raise
         return _old_render_to_string(request, *args, **kwargs)
 
     shortcuts.render = _render
-    loader.render_to_string = _render_to_string
+    #loader.render_to_string = _render_to_string
 
 
 def patch():
