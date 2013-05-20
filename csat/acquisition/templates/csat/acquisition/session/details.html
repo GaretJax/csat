@@ -65,7 +65,7 @@
 	{% for collector in session.collectors.all() %}
 		{% if collector.status == collector.RUNNING %}
 		<div data-uuid="{{ collector.running_instance_id }}" class="collector-monitor">
-			<strong>{{ collector.get_collector_module().name }}</strong>
+			<strong>{{ collector.get_collector().name }}</strong>
 			<ul class="tasks"></ul>
 		</div>
 		{% endif %}
@@ -84,6 +84,9 @@
 		<button type="button" class="close" data-dismiss="alert">&times;</button>
 		<strong>Still running!</strong> Some collectors are still running, the links below may not be accessible yet.
 	</div>
+	{% else %}
+	<a href="{% url "csat:visualization:standalone-viewer" %}?url={% url "csat:acquisition:session-view-results" session_pk=session.pk %}" class="btn btn-mini"><i class="icon-sitemap"></i> View graph</a>
+	<a href="{% url "csat:acquisition:session-view-results" session_pk=session.pk, html='.html' %}" class="btn btn-mini"><i class="icon-file"></i> View graph file</a>
 	{% endif %}
 	<table class="table">
 		<thead>
@@ -154,7 +157,7 @@
 	<div>
 		{% for collector in session.collectors.all() %}
 		<div data-uuid="{{ collector.running_instance_id }}" class="collector-monitor">
-			<strong>{{ collector.get_collector_module().name }}</strong>
+			<strong>{{ collector.get_collector().name }}</strong>
 			<ul class="tasks"></ul>
 		</div>
 		{% endfor %}

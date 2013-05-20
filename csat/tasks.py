@@ -90,13 +90,15 @@ class ConsoleTaskManager(TaskManager):
     name_width = 25
     status_width = 9
 
-    def __init__(self, terminal):
+    def __init__(self, terminal, pretty=True):
         super(ConsoleTaskManager, self).__init__()
         self.terminal = terminal
+        self.pretty = pretty
 
     def task_updated(self, task):
-        self.terminal.reset()
-        self.terminal.writenl()
+        if self.pretty:
+            self.terminal.reset()
+            self.terminal.writenl()
 
         terminal_width = self.terminal.width()
         bar_width = (min(self.width, terminal_width)
@@ -142,7 +144,8 @@ class ConsoleTaskManager(TaskManager):
                             status_width=self.status_width,
                         ))
             self.terminal.writenl(text[:terminal_width])
-        self.terminal.writenl()
+        if self.pretty:
+            self.terminal.writenl()
 
 
 class JsonRPCTaskManager(TaskManager):
@@ -243,6 +246,8 @@ class Task(object):
 
     @steps.setter
     def steps(self, val):
+        if self._steps == self.INDEFINITE:
+            self._steps = 0
         self._totalSteps = val
         self._progress = self._steps / self._totalSteps
 

@@ -3,6 +3,7 @@ A server to run a data collection session.
 Runs multiple collectors and gathers the results.
 """
 
+import os
 import json
 import uuid
 import random
@@ -89,7 +90,8 @@ class CollectorWrapper(object):
         """
         self.protocol = CollectorProcessProtocol(self)
         log.msg(' '.join(self.command))
-        self.reactor.spawnProcess(self.protocol, self.command[0], self.command)
+        self.reactor.spawnProcess(self.protocol, self.command[0], self.command,
+                                  env=os.environ)
         return self.protocol.whenDone()
 
     def run(self):

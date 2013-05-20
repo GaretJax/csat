@@ -9,12 +9,13 @@ from dateutil import parser as date_parser
 
 from bs4 import BeautifulSoup
 
-import networkx as nx
+from lxml import etree
 
 from twisted.python import log
 from twisted.internet import defer, reactor, task
 from twisted.web import client
 
+from csat.graphml.builder import GraphMLDocument, Attribute
 from csat.tasks import Task
 
 
@@ -41,12 +42,12 @@ class PipermailCollector(object):
 
         self.setup_twisted_logging()
 
-        self.graph = nx.DiGraph()
+        self._init_graph()
 
         def write_graphml(stream):
-            return nx.write_graphml(self.graph, stream)
+            return self.graph.to_file(stream)
 
-        self.graph.write_graphml = write_graphml
+        self.graph.write_graphml = self.graph.to_file
 
         def stop(_):
             reactor.stop()
@@ -67,6 +68,21 @@ class PipermailCollector(object):
             self.error.raiseException()
 
         return self.graph
+
+    def _init_graph(self):
+        self.graph = GraphMLDocument()
+
+        self.graph.attr(Attribute.NODE, 'domain')
+
+        self.graph.attr(Attribute.NODE, 'email')
+        self.graph.attr(Attribute.NODE, 'mails_sent', 'int')
+
+        self.graph.attr(Attribute.EDGE, 'count')
+        self.graph.attr(Attribute.ALL, 'type')
+
+        self.subgraph = self.graph.digraph().node(1, {
+            'domain': 'people'
+        }).subgraph()
 
     def setup_twisted_logging(self):
         observer = log.PythonLoggingObserver()
@@ -110,10 +126,14 @@ class PipermailCollector(object):
         self.publishTask.steps = len(senders) + len(threads)
 
         def publishSenders(senders):
+            senders_map = {}
+
             self.publishTask.statusText = 'Publishing nodes info...'
             for sender, mails in senders.iteritems():
-                self.graph.add_node(sender, {
+                sender_id = len(senders_map)
+                senders_map[sender] = self.subgraph.node(sender_id, {
                     'type': 'person',
+                    'email': sender,
                     'mails_sent': len(mails)
                 })
                 self.publishTask.makeStep()
@@ -123,7 +143,7 @@ class PipermailCollector(object):
             interactions = Counter()
             for subject, mails in threads.iteritems():
                 def key(m):
-                    return ['headers']['date']
+                    return m['headers']['date']
                 mails = sorted(mails, key=key)
                 sorted_posters = (m['headers']['from'] for m in mails[1:])
                 op = mails[0]['headers']['from']
@@ -136,7 +156,8 @@ class PipermailCollector(object):
             self.publishTask.statusText = 'Publishing edges info...'
             self.publishTask.steps += len(interactions)
             for (src, dst), count in interactions.iteritems():
-                self.graph.add_edge(src, dst, {
+                src, dst = senders_map[src], senders_map[dst]
+                self.subgraph.edge(src, dst, {
                     'type': 'interaction',
                     'count': count,
                 })

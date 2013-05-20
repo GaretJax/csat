@@ -25,6 +25,9 @@ urlpatterns = patterns(
     url(r'^session/(?P<session_pk>\d+)/view/(?P<collector_pk>\d+).graphml(?P<html>.html)?$',
         'collector_view_results', name='collector-view-results'),
 
+    url(r'^session/(?P<session_pk>\d+).graphml(?P<html>.html)?$',
+        'session_view_results', name='session-view-results'),
+
 #    url(r'^graphs/(?P<result_id>[A-Za-z0-9_-]+={0,2}).graphml',
 #        'collector_result', name='collector-result'),
 )

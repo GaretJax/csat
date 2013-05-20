@@ -1,6 +1,8 @@
+from StringIO import StringIO
 import logging
 import os
 
+from django.core.files.base import File
 from django.views.generic import edit, list, base, detail
 from django.shortcuts import get_object_or_404
 from django.core.urlresolvers import reverse, reverse_lazy
@@ -11,6 +13,7 @@ from django.core.servers.basehttp import FileWrapper
 from django.views.decorators.csrf import csrf_exempt
 
 from csat import acquisition, client
+from csat.graphml import builder
 from . import models, forms
 
 
@@ -284,6 +287,11 @@ class CollectorResult(edit.UpdateView):
     def get_success_url(self):
         return self.object.session_config.get_absolute_url()
 
+    def get_context_data(self, **kwargs):
+        context = super(CollectorResult, self).get_context_data(**kwargs)
+        context['page_title'] = 'Upload acquisition results'
+        return context
+
     def form_valid(self, form):
         self.object = form.save(commit=False)
 
@@ -299,8 +307,19 @@ class CollectorResult(edit.UpdateView):
             status=models.DataCollectorConfig.FAILED)
         active_collectors = active_collectors.exclude(
             status=models.DataCollectorConfig.COMPLETED)
+
         if not active_collectors.count():
-            # TODO: Merge graphs
+            successful =  self.object.session_config.collectors.filter(
+                status=models.DataCollectorConfig.COMPLETED).all()
+            files = [c.graph.path for c in successful]
+
+            # TODO: Find a generic way to do this
+            graph = builder.merge_files(files, key=('domain', {
+                'people': ('email', None),
+                'components': ('package', None),
+            }))
+            fh = graph.to_file(StringIO())
+            self.object.session_config.graph.save('graph', File(fh))
             self.object.session_config.set_completed()
 
         return HttpResponseRedirect(self.get_success_url())
@@ -431,3 +450,26 @@ class CollectorViewResults(FileViewer):
         return self.object.graph
 
 collector_view_results = CollectorViewResults.as_view()
+
+
+class SessionViewResults(FileViewer):
+    def get_title(self):
+        return 'Collected graph for session {}'.format(
+            self.object.name)
+
+    def get_mime(self):
+        return 'application/xml'
+
+    def get_filename(self):
+        return 'session_{}-merged.graphml'.format(self.object.pk)
+
+    def get_file(self):
+        try:
+            self.object = models.AcquisitionSessionConfig.objects.get(
+                pk=int(self.kwargs['session_pk']))
+        except models.DataCollectorConfig.DoesNotExist:
+            raise Http404(_("No %(verbose_name)s found matching the query") %
+                          {'verbose_name': models.AcquisitionSessionConfig._meta.verbose_name})
+        return self.object.graph
+
+session_view_results = SessionViewResults.as_view()

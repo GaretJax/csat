@@ -16,3 +16,8 @@ def get_collectors():
 
 def get_factories():
     return plugin.getPlugins(base.ICollectorFactory, collectors)
+
+
+def get_django_applications():
+    for collector in get_collectors():
+        yield collector.__class__.__module__
