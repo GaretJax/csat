@@ -1,5 +1,3 @@
-import os
-
 from csat.django.apps.base.bundles import make_css_bundle, make_js_bundle
 
 from csat.django.apps.bootstrap import assets as bootstrap
