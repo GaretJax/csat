@@ -1,27 +1,6 @@
 
 # {{{ jQuery plugins
 (($) ->
-	oldXHR = $.ajaxSettings.xhr
-	$.ajaxSettings.xhr = ->
-		xhr = oldXHR()
-		if (xhr instanceof window.XMLHttpRequest)
-			xhr.addEventListener('progress', this.progress, false)
-
-		if (xhr.upload)
-			xhr.upload.addEventListener('progress', this.progress, false)
-
-		return xhr
-
-	$.urlParam = (name) ->
-		name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]")
-		regexS = "[\\?&]" + name + "=([^&#]*)"
-		regex = new RegExp(regexS)
-		results = regex.exec(window.location.search)
-		if (results == null)
-			return ""
-		else
-			return decodeURIComponent(results[1].replace(/\+/g, " "))
-
 	$.getGraph = (url) ->
 		$.ajax(
 			url: url,
@@ -71,7 +50,7 @@
 # }}}
 
 
-# {{ On load handler 
+# {{ On load handler
 (($) ->
 	$ ->
 		if $('#viewport.scene').size()

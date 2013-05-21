@@ -1,4 +1,4 @@
-from csat.django.apps.base.bundles import make_css_bundle, make_js_bundle
+from csat.django.apps.base.bundles import make_css_bundle, make_js_bundle, coffee
 
 from csat.django.apps.bootstrap import assets as bootstrap
 
@@ -26,10 +26,15 @@ jquery_ui = make_js_bundle('jquery-ui', [
     'js/jquery-ui-1.10.2.custom.js',
 ])
 
+plugins = make_js_bundle('plugins', [
+    coffee('jquery.*'),
+], filters=['coffeescript'])
+
 external_libraries = make_js_bundle('base_libs', [
     jquery,
+    jquery_ui,
     bootstrap.js,
-    jquery_ui
+    plugins,
 ])
 
 all_js = make_js_bundle('master', [

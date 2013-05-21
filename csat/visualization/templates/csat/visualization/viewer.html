@@ -5,7 +5,47 @@
 
 
 {% block content %}
-<div class="scene" id="viewport"></div>
+<div class="graph-viewer">
+	<div class="viewport"></div>
+	<div class="sidebar">
+		<div class="box basic">
+			<h2>Basic information</h2>
+			<dl class="dl-horizontal">
+				<dt>Data source</dt>
+				<dd class="info-source">—</dd>
+				<dt>Domains</dt>
+				<dd class="info-domains">—</dd>
+				<dt>Nodes</dt>
+				<dd class="info-nodes">—</dd>
+				<dt>Edges</dt>
+				<dd class="info-edges">—</dd>
+			</dl>
+		</div>
+		<div class="box domains">
+			<h2>Domains</h2>
+			<ul></ul>
+		</div>
+		<div class="box layout">
+			<h2>Layout engine</h2>
+			<div class="btn-group">
+				<button class="btn" data-action="toggleRunLayout" data-toggle="button"><i class="icon-play"></i> Run</button>
+				<button class="btn" data-action="runLayoutStep"><i class="icon-step-forward"></i> Step</button>
+				<button class="btn" data-action="resetLayout"><i class="icon-refresh"></i> Reset</button>
+			</div>
+			Iteration speed:
+			<input type="text" value="" class="slider"
+				data-slider-min="0"
+				data-slider-max="800"
+				data-slider-step="1"
+				data-slider-value="0"
+				data-slider-orientation="horizontal"
+				data-slider-selection="after"
+				data-slider-tooltip="hide"/>
+		</div>
+	</div>
+	<div class="timeline"></div>
+	<div class="overlay"></div>
+</div>
 {% endblock %}
 
 

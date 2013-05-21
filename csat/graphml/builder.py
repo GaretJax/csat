@@ -428,7 +428,7 @@ class Graph(_AttributesProxyMixin, object):
 
         return level
 
-    def node(self, id, attributes=None):
+    def node(self, id=None, attributes=None):
         """
         Adds a new node to the graph with ID C{id}.
 
@@ -440,10 +440,12 @@ class Graph(_AttributesProxyMixin, object):
 
         @raise: L{KeyError} if the node already exists.
         """
-        id = int(id)
-
-        if id in self._nodes:
-            raise KeyError('Node with ID {:d} already exists.'.format(id))
+        if id is not None:
+            id = int(id)
+            if id in self._nodes:
+                raise KeyError('Node with ID {:d} already exists.'.format(id))
+        else:
+            id = get_unique_id(self._nodes)
 
         node = Node(self, id, attributes)
         self._nodes[id] = node

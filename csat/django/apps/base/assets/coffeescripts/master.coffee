@@ -7,4 +7,5 @@
 		$(':file').filestyle({
 			icon: true,
 		})
+		$('input[data-slider-value]').slider()
 )(jQuery)

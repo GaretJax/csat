@@ -45,7 +45,7 @@ setup = (container) ->
 generateNodes = (n) ->
 	material = new THREE.MeshNormalMaterial()
 	group = new THREE.Object3D()
-	
+
 	minSize = 0.1
 	maxSize = 1
 	domains = 3
@@ -84,7 +84,7 @@ generateNodes = (n) ->
 		group.add(mesh)
 
 		nodes[domain].push(mesh)
-	
+
 	makeEdge = (src, dst) ->
 		edge_seg = new THREE.Geometry(5)
 		edge_seg.vertices.push(src.position)
@@ -294,7 +294,7 @@ class Layout
 	run: (@view, callback) ->
 		this._stop = false
 		this.start()
-		
+
 		runstep = =>
 			console.log 'tick'
 			this._calculateForces()
@@ -398,7 +398,7 @@ class RandomLayout extends Layout
 class GraphRenderer
 	constructor: (@modelView, @layout) ->
 		this.nodeViews = []
-	
+
 	createScene: ->
 		this.scene = new THREE.Scene()
 

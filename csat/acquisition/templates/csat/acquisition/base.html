@@ -1,1 +1,8 @@
 {% extends "csat/base.html" %}
+
+
+{% block scripts -%}
+	{{ super() }}
+	{{ lib.loadjs("acquisition") }}
+{%- endblock %}
+

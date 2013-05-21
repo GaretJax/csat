@@ -1,54 +1,161 @@
 @import compass
 @import variables
 
+$sidebar-width: 350px
+$timeline-height: 70px
 
-.graph-list
-	.front-panel
-		text-align: center
-
-		a
-
-	strong
-		width: 200px
-		font-weight: normal
-		font-size: 20px
-		padding: 20px 0 0px
-		display: block
-		text-align: left
-		border-top: 1px solid #e0e0e0
-
-	img
-		max-width: 200px
-		max-height: 200px
-		padding-bottom: 20px
-		display: block
-
-	a + a
-		margin-left: 10px
-
-
-.scene
-	position: absolute
-	border: 1px solid #ccc
-	z-index: -1
-	display: none
-
-
-#scene0, #viewport
+.graph-viewer
 	display: block
+	position: absolute
 	top: 80px
 	left: 20px
 	right: 20px
 	bottom: 20px
+	border: 1px solid #ccc
+	+border-radius(4px)
+	+box-sizing(border-box)
 
-#scene1
-	top: 80px
-	left: 540px
+	.viewport
+		position: absolute
+		top: 0
+		left: 0
+		right: $sidebar-width
+		bottom: $timeline-height
+		+box-sizing(border-box)
+		+border-top-left-radius(4px)
 
-#scene2
-	top: 600px
-	left: 20px
+	.sidebar
+		position: absolute
+		top: 0
+		bottom: $timeline-height
+		right: 0
+		width: $sidebar-width
+		border-left: 1px solid #ccc
+		background: #fcfcfc
+		overflow: auto
+		+box-sizing(border-box)
+		+border-top-right-radius(4px)
 
-#scene3
-	top: 600px
-	left: 540px
+		.box
+			border-bottom: 1px solid #f6f6f6
+			border-top: 1px solid #ddd
+			max-width: 100%
+			overflow-x: auto
+			position: relative
+			padding-top: 32px
+
+			&:first-child
+				border-top: 0
+
+			&:last-child
+				border-bottom: 0
+
+			h2
+				position: absolute
+				top: 0
+				left: 0
+				right: 0
+				margin: 0
+				padding: 0 .5em 1px .5em
+				color: #777
+				text-shadow: #fff 0 1px 0
+				font-size: 1.1em
+				border-bottom: 1px solid #d3d3d3
+				line-height: 2em
+				+background-image(linear-gradient(top, #fff, #f2f2f2))
+
+	.timeline
+		position: absolute
+		bottom: 0
+		left: 0
+		right: 0
+		height: $timeline-height
+		border-top: 1px solid #ccc
+		background: #fcfcfc
+		+box-sizing(border-box)
+		+border-bottom-radius(4px)
+
+	.overlay
+		position: absolute
+		bottom: 0
+		left: 0
+		top: 0
+		right: 0
+		display: none
+		opacity: 0
+		background: rgba(#000, 0.1)
+		+border-radius(3px)
+		+transition(opacity .7s, bottom .2s, right .2s, border-radius .2s)
+
+		&.active
+			display: block
+
+		&.scene-only
+			right: $sidebar-width
+			bottom: $timeline-height
+			+border-radius(0)
+			+border-top-left-radius(3px)
+
+		&.visible
+			opacity: 1
+
+		> *
+			position: absolute
+			top: 0px
+			bottom: 0px
+			left: 0px
+			right: 0px
+			margin: auto
+
+		div
+			width: 400px
+			height: 20px
+			text-align: center
+			color: #888
+			text-shadow: #fff 0px 1px 0px
+			padding-top: 40px
+
+			.spinner
+				top: 10px
+
+.sidebar > .basic
+	dl
+		margin-bottom: 1em
+
+	dt
+		width: 100px
+	dd
+		margin-left: 120px
+
+.sidebar > .domains
+	ul
+		margin: 0
+		padding: 0
+
+	li
+		display: block
+		padding: 0 .5em
+		line-height: 2em
+
+		& + li
+			border-top: 1px solid #ddd
+
+		&:nth-child(2n+1)
+			background: #fff
+
+		.muted
+			font-style: italic
+			font-size: 0.85em
+
+.sidebar > .layout
+	padding: 0 .5em
+
+	.btn-group
+		width: 100%
+		.btn
+			margin-top: .6em
+			width: 33.33%
+			margin-bottom: .1em
+
+	.slider
+		margin: 10px 0 10px 10px !important

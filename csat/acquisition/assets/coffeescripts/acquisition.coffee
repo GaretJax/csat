@@ -54,11 +54,11 @@ $ ->
 		mainform = $('> form', session)
 		mainspinner = $('<div/>')
 			.addClass('loading-overlay hidden')
-			.append(makeSpinner())
+			.append($.spinner())
 			.appendTo(mainform)
 		show = -> mainspinner.removeClass('hidden')
 		setTimeout(show, 0)
-	
+
 		callbacks.push($.post(
 			mainform.attr('action'),
 			mainform.serialize(), (r) ->
@@ -75,7 +75,7 @@ $ ->
 
 			spinner = $('<div/>')
 				.addClass('loading-overlay hidden')
-				.append(makeSpinner())
+				.append($.spinner())
 				.insertAfter(form)
 
 			show = -> spinner.removeClass('hidden')
@@ -94,7 +94,7 @@ $ ->
 					setTimeout(remove, 300)
 			))
 		)
-		
+
 		done = $.Deferred()
 		deferred_done = =>
 			$.when(callbacks...).done(->
@@ -102,7 +102,7 @@ $ ->
 					.attr('disabled', false)
 					.next('.dropdown-toggle')
 					.attr('disabled', false)
-				
+
 				if errors
 					done.reject()
 				else
@@ -123,7 +123,7 @@ makeCollectorConfig = (form_action) ->
 
 	front = $('<div/>')
 		.addClass('front-panel')
-		.append(makeSpinner())
+		.append($.spinner())
 		.appendTo(src)
 
 	$.ajax({
@@ -134,12 +134,6 @@ makeCollectorConfig = (form_action) ->
 	)
 
 	return src
-
-makeSpinner = ->
-	spinner = $('<span/>').addClass('spinner')
-	for i in [0...50]
-		$('<span/>').appendTo(spinner)
-	return spinner
 
 makeRemoveConfirmPrompt = ->
 	container = $('<div/>').addClass('confirm-overlay hidden')
@@ -152,7 +146,7 @@ makeRemoveConfirmPrompt = ->
 			p.remove()
 			ok.remove()
 			nok.remove()
-			makeSpinner().appendTo(container)
+			$.spinner().appendTo(container)
 
 			url = form.data('deleteurl')
 
@@ -228,7 +222,7 @@ $ ->
 
 		front = $('<div/>')
 			.addClass('front-panel')
-			.append(makeSpinner())
+			.append($.spinner())
 			.appendTo(src)
 
 		$.ajax({
@@ -259,7 +253,7 @@ class Task
 		status = this.el.data('status')
 		this.setProgressStatus(progress, status)
 		return this
-		
+
 	setStatus: (status) ->
 		progress = this.el.data('progress')
 		this.setProgressStatus(progress, status)
@@ -325,7 +319,7 @@ class Task
 		el = $("<#{elementType}/>")
 			.attr('id', "task-#{uuid}")
 			.addClass('task')
-		
+
 		$('<p/>').appendTo(el)
 		bar = $('<div/>').addClass('progress').appendTo(el)
 		indicator = $('<div/>').addClass('bar').appendTo(bar)
@@ -342,13 +336,13 @@ checkComplete = (container) ->
 		dismiss.insertAfter($('strong', container)).click(->
 			container.remove()
 		)
-	
+
 
 loadTasks = (server) ->
 	collector = $(this)
 	uuid = collector.data('uuid')
 	container = $('.tasks', collector)
-	
+
 	server.call('getTasksForCollector', uuid).done (tasks) ->
 		$.each(tasks, (i, data) ->
 			Task.fromData(data).appendTo(container)
@@ -371,7 +365,7 @@ loadTasks = (server) ->
 $ ->
 	if not $('.collector-monitor').size()
 		return
-	
+
 	ws = $.websocket("ws://#{window.location.hostname}:7002/", {
 		open: (->
 			$('.collector-monitor').each(->
