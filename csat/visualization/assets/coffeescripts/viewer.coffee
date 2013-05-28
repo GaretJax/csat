@@ -83,12 +83,31 @@ class Viewer
 
         # The layout defines how the nodes and edges have to be laid out in
         # the plane (2D) or space (3D). Simply put, defines the positions.
-        layout = new FruchtermanReingoldLayout()
+        #layout = new FruchtermanReingoldLayout()
+        layouts = []
+        for i in this.model.domains
+            layouts.push(new FruchtermanReingoldLayout({
+                k: 100,
+                iterations: 500,
+                initialTemperature: 2,
+                radius: 70,
+            }))
 
         # The graph rendered is responsible to populate the scene with objects
         # representing the graph nodes and edges by respecting the imposed
         # layout.
-        this.graphRenderer = new GraphRenderer(this.model, layout)
+        this.graphRenderer = new GraphRenderer(this.model, layouts[0])
+        this.graphRenderer = new PartitionedGraphRenderer(this.model, layouts,
+            new FruchtermanReingoldLayout({
+                k: 300,
+                iterations: 500,
+                initialTemperature: 6,
+                radius: 1000,
+            }))
+        #60
+        #500: 200
+        #1000
+        #2000
         this.graphRenderer.draw(scene)
 
         # The viewport renderer takes a scene and actually displays it in the

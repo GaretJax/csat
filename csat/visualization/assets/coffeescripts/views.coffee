@@ -51,7 +51,7 @@ class MultipleViewportsRenderer
         this.container.append(this.renderer.domElement)
 
         this.stats = new Stats()
-        this.stats.setMode(0)
+        this.stats.setMode(1)
         this.stats.domElement.style.position = 'absolute'
         this.stats.domElement.style.left = '0px'
         this.stats.domElement.style.top = '0px'
@@ -70,12 +70,12 @@ class MultipleViewportsRenderer
             viewport.prepareScene(this.scene)
             viewport.prepareRenderer(this.renderer, width, height)
             this.renderer.render(this.scene, viewport.camera)
-            viewport.controls.update()
+            if viewport.controls?
+                viewport.controls.update()
 
     animate: ->
-        renderer = this
-        animate = ->
+        animate = =>
             requestAnimationFrame(animate)
-            renderer.render()
-            renderer.stats.update()
+            this.render()
+            this.stats.update()
         animate()

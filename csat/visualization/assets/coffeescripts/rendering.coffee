@@ -1,3 +1,25 @@
+geo2line = (geo) ->
+    geometry = new THREE.Geometry()
+    vertices = geometry.vertices
+
+    for i in [0..geo.faces.length]
+        face = geo.faces[i]
+        if face instanceof THREE.Face3
+            a = geo.vertices[ face.a ].clone()
+            b = geo.vertices[ face.b ].clone()
+            c = geo.vertices[ face.c ].clone()
+            vertices.push(a, b, b, c, c, a)
+        else if face instanceof THREE.Face4
+            a = geo.vertices[ face.a ].clone()
+            b = geo.vertices[ face.b ].clone()
+            c = geo.vertices[ face.c ].clone()
+            d = geo.vertices[ face.d ].clone()
+            vertices.push( a,b, b,c, c,d, d,a )
+
+    geometry.computeLineDistances()
+    return geometry
+
+
 class NodeView
     constructor: (@node) ->
         this.position = new THREE.Vector3(0, 0, 0)
@@ -63,31 +85,9 @@ class GraphRenderer
         this.edgeViews = []
         this.nodeViews = []
 
-    draw: (scene) ->
-        geo2line = (geo) ->
-            geometry = new THREE.Geometry()
-            vertices = geometry.vertices
-
-            for i in [0..geo.faces.length]
-                face = geo.faces[i]
-                if face instanceof THREE.Face3
-                    a = geo.vertices[ face.a ].clone()
-                    b = geo.vertices[ face.b ].clone()
-                    c = geo.vertices[ face.c ].clone()
-                    vertices.push(a, b, b, c, c, a)
-                else if face instanceof THREE.Face4
-                    a = geo.vertices[ face.a ].clone()
-                    b = geo.vertices[ face.b ].clone()
-                    c = geo.vertices[ face.c ].clone()
-                    d = geo.vertices[ face.d ].clone()
-                    vertices.push( a,b, b,c, c,d, d,a )
-
-            geometry.computeLineDistances()
-            return geometry
-
-        cubeGeometry = new THREE.CubeGeometry(50, 50, 50 )
+    _drawWireframe: (scene) ->
+        cubeGeometry = new THREE.CubeGeometry(50, 50, 50)
         sphereGeometry = new THREE.SphereGeometry(50, 20, 20)
-
         dashMaterial = new THREE.LineBasicMaterial({
             color: 0x000000,
             opacity: .3,
@@ -102,8 +102,13 @@ class GraphRenderer
         sphere = new THREE.Mesh(sphereGeometry, lambertMaterial)
         wireframe.position.set(0, 0, 0)
         sphere.position.set(0, 0, 0)
-        #scene.add(wireframe)
+        scene.add(wireframe)
+
+    draw: (scene) ->
+        #this._drawWireframe(scene)
+
         nodeViewsMap = []
+
         this.nodes = new THREE.Object3D()
         for domain in this.model.domains
             nodeViewsMap[domain.id] = dl = []
@@ -114,7 +119,6 @@ class GraphRenderer
                 this.nodes.add(view.getMesh())
 
         this.edges = new THREE.Object3D()
-
         for edge in this.model.edges
             src = nodeViewsMap[edge.src.fqid[0]][edge.src.fqid[1]]
             dst = nodeViewsMap[edge.dst.fqid[0]][edge.dst.fqid[1]]
@@ -124,8 +128,6 @@ class GraphRenderer
 
         scene.add(this.nodes)
         scene.add(this.edges)
-
-        console.log scene
 
     runLayoutStep: ->
         this.layout.runStep(this.nodeViews, this.edgeViews, =>
@@ -151,3 +153,89 @@ class GraphRenderer
 
     isLayoutRunning: ->
         return this.layout._running
+
+
+class PartitionedGraphRenderer
+    constructor: (@model, @layouts, @partitionsLayout) ->
+        this.partitions = []
+
+    draw: (scene) ->
+        for partition in this.model.domains
+            this.partitions[partition.id] = data = {
+                nodeViews: [],
+                edgeViews: [],
+                nodeMap: [],
+                object: new THREE.Object3D(),
+            }
+
+            data.object.position = new THREE.Vector3(30 * partition.id, 30 * partition.id, 30 * partition.id)
+
+            for node in partition.nodes
+                view = new NodeView(node)
+                data.nodeViews.push(view)
+                data.nodeMap[node.id] = view
+                data.object.add(view.getMesh())
+
+            scene.add(data.object)
+
+        for edge in this.model.edges
+            src_partition = edge.src.fqid[0]
+            dst_partition = edge.src.fqid[0]
+
+            if src_partition == dst_partition
+                partition = this.partitions[src_partition]
+                src_view = partition.nodeMap[edge.src.fqid[1]]
+                dst_view = partition.nodeMap[edge.dst.fqid[1]]
+                if not src_view or not dst_view
+                    continue
+                view = new EdgeView(edge, src_view, dst_view)
+                partition.object.add(view.getMesh())
+                partition.edgeViews.push(view)
+
+        nodeViews = []
+        edgeViews = []
+        for partition in this.partitions
+            nodeViews.push(partition.object)
+            for opartition in this.partitions
+                if partition != opartition
+                    edgeViews.push({
+                        src: partition.object,
+                        dst: opartition.object,
+                    })
+
+        for i in [0...100]
+            this.partitionsLayout.runStep(nodeViews, edgeViews, ->
+            )
+
+    _applyLayout: (func, nodes, edges) ->
+        func(nodes, edges, =>
+            for node in nodes
+                node.update()
+            for edge in edges
+                edge.update()
+        )
+
+    runLayoutStep: ->
+        for id in [0...this.partitions.length]
+            partition = this.partitions[id]
+            layout = this.layouts[id]
+            this._applyLayout(layout.runStep.bind(layout), partition.nodeViews,
+                partition.edgeViews)
+
+    runLayout: ->
+        for id in [0...this.partitions.length]
+            partition = this.partitions[id]
+            layout = this.layouts[id]
+            this._applyLayout(layout.run.bind(layout), partition.nodeViews,
+                partition.edgeViews)
+
+    pauseLayout: ->
+        for layout in this.layouts
+            layout.stop()
+
+    resetLayout: ->
+        for layout in this.layouts
+            layout.reset()
+
+    isLayoutRunning: ->
+        return this.layouts[0]._running

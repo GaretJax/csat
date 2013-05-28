@@ -20,3 +20,21 @@ master = bundles.make_js_bundle('viewer', [
     bundles.coffee('graph'),
     bundles.coffee('viewer'),
 ], filters=['coffeescript'])
+
+
+seedrandom = bundles.make_js_bundle('seedrandom', [
+    'js/seedrandom.js',
+])
+
+benchmarks = bundles.make_js_bundle('benchmarks_base', [
+    bundles.coffee('views'),
+    bundles.coffee('rendering'),
+    bundles.coffee('layout'),
+    bundles.coffee('graph'),
+    bundles.coffee('benchmarks'),
+], filters=['coffeescript'])
+
+bundles.make_js_bundle('benchmarks', [
+    seedrandom,
+    benchmarks,
+])

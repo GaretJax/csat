@@ -1,5 +1,5 @@
 class Layout
-    construct: ->
+    constructor: ->
         this.interval = 1
         this._initialized = false
         this._running = false
@@ -44,6 +44,9 @@ class Layout
 
 
 class FruchtermanReingoldLayout extends Layout
+    constructor: (params) ->
+        {@k, @iterations, @initialTemperature, @radius} = params
+
     setup: ->
         for v in this.nodeViews
             v.position = new THREE.Vector3(
@@ -51,10 +54,7 @@ class FruchtermanReingoldLayout extends Layout
                 (Math.random()-0.5) * 50,
                 (Math.random()-0.5) * 50,
             )
-        this.temperature = 8.0
-        this.k = 10
-        this.initialTemperature = this.temperature
-        this.iterations = 500
+        this.temperature = this.initialTemperature
         this.currentIteration = this.iterations
 
     step: ->
@@ -92,9 +92,8 @@ class FruchtermanReingoldLayout extends Layout
             p = v.position.clone().add(v._force.normalize().multiplyScalar(d))
 
             # Spherical container
-            radius = 50
-            if p.lengthSq() > radius * radius
-                p.setLength(radius)
+            if p.lengthSq() > this.radius * this.radius
+                p.setLength(this.radius)
             # Cubic container
             #[width, height, depth] = [50, 50, 50]
             #p.x = Math.min(width/2, Math.max(-width/2, p.x))

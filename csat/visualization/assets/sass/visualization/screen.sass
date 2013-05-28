@@ -4,6 +4,67 @@
 $sidebar-width: 350px
 $timeline-height: 70px
 
+.benchmarks
+	position: relative
+
+	.viewport
+		border: 1px solid #ccc
+		width: 800px
+		height: 800px
+
+	.actions
+		position: absolute
+		right: 0
+		left: 810px
+		height: 40px
+		top: 0
+		margin: 0
+
+		button
+			margin-top: 20px
+
+		label
+			font-size: 0.8em
+			color: #333
+			margin-right: 5px
+			float: left
+
+			input
+				display: block
+				width: 40px
+				text-align: right
+
+			&.intra
+				input
+					width: 100px
+
+			&.seed
+				input
+					width: 100px
+					clear: right
+
+	.console
+		position: absolute
+		right: 0
+		left: 810px
+		height: 800px
+		top: 58px
+		margin: 0
+		border: 1px solid #ccc
+		font-family: Monaco, Menlo, Consolas, "Courier New", monospace
+		font-size: 12px
+		overflow-y: scroll
+		padding-top: 2px
+
+		li
+			display: block
+			padding: 0 1.5em
+			text-indent: -1em
+			white-space: pre
+
+			&:nth-child(2n)
+				background: rgba(#ccc, 0.1)
+
 .graph-viewer
 	display: block
 	position: absolute

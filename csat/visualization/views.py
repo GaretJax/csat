@@ -30,3 +30,9 @@ class GraphRenderingView(detail.DetailView):
         return context
 
 graph = GraphRenderingView.as_view()
+
+
+class StandaloneRenderingView(base.TemplateView):
+    template_name = 'csat/visualization/benchmarks.html'
+
+benchmarks = StandaloneRenderingView.as_view()
