@@ -22,7 +22,11 @@ class Console
             s = []
             $('.actions label').each(->
                 name = $(this).attr('class')
-                value = $('input', this).val()
+                input = $('input', this)
+                if input.attr('type') == 'checkbox'
+                    value = input.is(':checked')
+                else
+                    value = input.val()
                 context[name] = value
                 s.push("#{name}=#{value}")
             )
@@ -83,7 +87,8 @@ class Console
                             setTimeout(bench, 10)
                         else
                             webconsole.log("Done.")
-                            callbacks.save()
+                            if context.save
+                                callbacks.save()
                     setTimeout(bench, 0)
                 setTimeout(rest, 0)
 
