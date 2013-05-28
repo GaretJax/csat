@@ -28,13 +28,34 @@ class Console
             )
             return s
 
+        timings = []
+
         callbacks = {
+            save: () ->
+                measure = {
+                    case: 'rendering',
+                    commit: '34a844f96499cb5f8242038a2d81b6fe88a0752d',
+                    data: JSON.stringify({
+                        domains: context.domains,
+                        nodes: context.nodes,
+                        edges: context.edges,
+                        intra: context.intra,
+                        seed: context.seed,
+                    }),
+                    iterations: context.iter,
+                    timings: timings,
+                }
+                $.post(window.location, measure, ->
+                    webconsole.log('Benchmark saved to the server.')
+                )
+
             run: () ->
                 while scene.children.length > 1
                     scene.remove(scene.children[1])
 
                 s = loadContext()
 
+                timings = []
                 webconsole.log("Creating random graph (#{s.join(', ')})")
 
                 rest = ->
@@ -50,6 +71,7 @@ class Console
                             viewportRenderer.render()
                         duration = viewportRenderer.stats.end() - start
                         fps = context.iter / duration * 1000.0
+                        timings.push(duration)
                         if duration >= 1000
                             d = "#{Math.round(duration / 10) / 100} s"
                         else
@@ -61,6 +83,7 @@ class Console
                             setTimeout(bench, 10)
                         else
                             webconsole.log("Done.")
+                            callbacks.save()
                     setTimeout(bench, 0)
                 setTimeout(rest, 0)
 
