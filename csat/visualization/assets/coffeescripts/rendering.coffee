@@ -24,6 +24,7 @@ class NodeView
     constructor: (@node) ->
         this.position = new THREE.Vector3(0, 0, 0)
         this.force = new THREE.Vector3(0, 0, 0)
+        this.mesh = this.position
         return
 
         size = .5
@@ -53,8 +54,9 @@ class NodeView
         return this.mesh
 
     update: ->
-        this.mesh.position = this.position
-        this.mesh.updateMatrix()
+        #this.mesh.position = this.position
+        #this.position = this.position
+        #this.mesh.updateMatrix()
         #this.vertexMesh.
         #this.forceMesh.setLength(this.force.length() * 0.2)
         #this.forceMesh.setDirection(this.force.normalize())
@@ -106,53 +108,81 @@ class GraphRenderer
         sphere.position.set(0, 0, 0)
         scene.add(wireframe)
 
-    draw: (scene) ->
-        #this._drawWireframe(scene)
-
+    _drawNodes: (scene) ->
         nodeViewsMap = []
 
-        nodesPositions = new THREE.Geometry()
+        this.nodesPositions = new THREE.Geometry()
         for domain in this.model.domains
             nodeViewsMap[domain.id] = dl = []
             for node in domain.nodes
                 view = new NodeView(node)
                 this.nodeViews.push(view)
                 dl[node.id] = view
-                nodePositions.vertices.push(view.position)
+                this.nodesPositions.vertices.push(view.getMesh())
 
         nodesMaterial = new THREE.ParticleBasicMaterial({
-            color: 0xff0000,
+            color: 0xffffff,
             size: 2,
+            map: THREE.ImageUtils.loadTexture('/static/images/ball.png'),
+            #blending: THREE.AdditiveBlending,
+            transparent: true,
         })
 
-        this.nodes = new THREE.ParticleSystem(nodesPositions, nodesMaterial)
+        this.nodes = new THREE.ParticleSystem(this.nodesPositions, nodesMaterial)
+        this.nodes.sortParticles = true
+        scene.add(this.nodes)
+        return nodeViewsMap
 
-        this.edges = new THREE.Object3D()
+    _drawEdges: (scene, nodeViewsMap) ->
+        this.edgesPositions = new THREE.Geometry()
+        edgesMaterial = new THREE.LineBasicMaterial({
+            color: 0x999999,
+        })
+
         for edge in this.model.edges
             src = nodeViewsMap[edge.src.fqid[0]][edge.src.fqid[1]]
             dst = nodeViewsMap[edge.dst.fqid[0]][edge.dst.fqid[1]]
             view = new EdgeView(edge, src, dst)
             this.edgeViews.push(view)
-            this.edges.add(view.getMesh())
+            this.edgesPositions.vertices.push(view.src.position)
+            this.edgesPositions.vertices.push(view.dst.position)
+            #this.edges.vertices.push(view.getMesh())
 
-        scene.add(this.nodes)
-        #scene.add(this.edges)
+        this.edgesPositions.computeBoundingSphere()
+        this.edges = new THREE.Line(this.edgesPositions, edgesMaterial)
+
+        scene.add(this.edges)
+
+    draw: (scene) ->
+        #this._drawWireframe(scene)
+        map = this._drawNodes(scene)
+        this._drawEdges(scene, map)
+
+    _applyLayout: (func, nodes, edges) ->
+        func(nodes, edges, =>
+            for i in [0...nodes.length]
+                this.nodesPositions.vertices[i] = nodes[i].position
+            for i in [0...edges.length]
+                this.edgesPositions.vertices[i*2] = edges[i].src.position
+                this.edgesPositions.vertices[i*2+1] = edges[i].dst.position
+            this.nodes.geometry.__dirtyVertices = true
+            this.edges.geometry.__dirtyVertices = true
+            this.edges.geometry.verticesNeedUpdate = true
+            this.edgesPositions.computeBoundingSphere()
+        )
+
 
     runLayoutStep: ->
-        this.layout.runStep(this.nodeViews, this.edgeViews, =>
-            for node in this.nodeViews
-                node.update()
-            for edge in this.edgeViews
-                edge.update()
-        )
+        this._applyLayout(
+            this.layout.runStep.bind(this.layout),
+            this.nodeViews,
+            this.edgeViews)
 
     runLayout: ->
-        this.layout.run(this.nodeViews, this.edgeViews, =>
-            for node in this.nodeViews
-                node.update()
-            for edge in this.edgeViews
-                edge.update()
-        )
+        this._applyLayout(
+            this.layout.run.bind(this.layout),
+            this.nodeViews,
+            this.edgeViews)
 
     pauseLayout: ->
         this.layout.stop()
@@ -218,10 +248,11 @@ class PartitionedGraphRenderer
 
     _applyLayout: (func, nodes, edges) ->
         func(nodes, edges, =>
-            for node in nodes
+            for i in [0...nodes.length]
                 node.update()
             for edge in edges
                 edge.update()
+            this.nodes.geometry.__dirtyVertices = true
         )
 
     runLayoutStep: ->
