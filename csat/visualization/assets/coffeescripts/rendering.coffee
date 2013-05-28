@@ -24,6 +24,8 @@ class NodeView
     constructor: (@node) ->
         this.position = new THREE.Vector3(0, 0, 0)
         this.force = new THREE.Vector3(0, 0, 0)
+        return
+
         size = .5
         radius = 40
         resolution = Math.floor(Math.sqrt(size) * 10)
@@ -109,14 +111,21 @@ class GraphRenderer
 
         nodeViewsMap = []
 
-        this.nodes = new THREE.Object3D()
+        nodesPositions = new THREE.Geometry()
         for domain in this.model.domains
             nodeViewsMap[domain.id] = dl = []
             for node in domain.nodes
                 view = new NodeView(node)
                 this.nodeViews.push(view)
                 dl[node.id] = view
-                this.nodes.add(view.getMesh())
+                nodePositions.vertices.push(view.position)
+
+        nodesMaterial = new THREE.ParticleBasicMaterial({
+            color: 0xff0000,
+            size: 2,
+        })
+
+        this.nodes = new THREE.ParticleSystem(nodesPositions, nodesMaterial)
 
         this.edges = new THREE.Object3D()
         for edge in this.model.edges
@@ -127,7 +136,7 @@ class GraphRenderer
             this.edges.add(view.getMesh())
 
         scene.add(this.nodes)
-        scene.add(this.edges)
+        #scene.add(this.edges)
 
     runLayoutStep: ->
         this.layout.runStep(this.nodeViews, this.edgeViews, =>
