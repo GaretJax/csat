@@ -189,9 +189,9 @@ class Random(Graph):
     key = 'rand'
     description = 'Random graph'
 
-    domains = 3
-    nodes = 60
-    edges = 200
+    domains = 5
+    nodes = 500
+    edges = 2000
     inside_edge_ratio = 0.95
     seed = 120
 

@@ -61,7 +61,10 @@ class Module(object):
             if isinstance(node, ast.Import):
                 module = []
             elif isinstance(node, ast.ImportFrom):
-                module = node.module.split('.')
+                if node.module:
+                    module = node.module.split('.')
+                else:
+                    module = []
             else:
                 continue
 

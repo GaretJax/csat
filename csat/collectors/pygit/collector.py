@@ -297,7 +297,7 @@ class GitPythonCollector(object):
                 removed = old_dependencies - dependencies
                 added = dependencies - old_dependencies
             except ModuleNotFound:
-                assert not deleted
+                #assert not deleted
                 self.log.debug('Created {!r}'.format(module))
                 self.graph.add_module(commit, module)
                 added = dependencies
