@@ -87,22 +87,22 @@ class Viewer
         layouts = []
         for i in this.model.domains
             layouts.push(new FruchtermanReingoldLayout({
-                k: 100,
+                k: 10,
                 iterations: 500,
                 initialTemperature: 2,
-                radius: 70,
+                radius: 400,
             }))
 
         # The graph rendered is responsible to populate the scene with objects
         # representing the graph nodes and edges by respecting the imposed
         # layout.
         this.graphRenderer = new GraphRenderer(this.model, layouts[0])
-        this.graphRenderer = new PartitionedGraphRenderer(this.model, layouts,
+        this._graphRenderer = new PartitionedGraphRenderer(this.model, layouts,
             new FruchtermanReingoldLayout({
-                k: 300,
+                k: 10,
                 iterations: 500,
                 initialTemperature: 6,
-                radius: 1000,
+                radius: 1500,
             }))
         #60
         #500: 200

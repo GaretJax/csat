@@ -47,7 +47,9 @@ class RotatingViewport extends Viewport
 
 class MultipleViewportsRenderer
     constructor: (@container, @scene, @viewports) ->
-        this.renderer = new THREE.WebGLRenderer()
+        this.renderer = new THREE.WebGLRenderer({
+            antialias: true,
+        })
         this.container.append(this.renderer.domElement)
 
         this.stats = new Stats()

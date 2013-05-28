@@ -18,6 +18,8 @@ class Console
     $ ->
         context = {}
 
+        graphRenderer = undefined
+
         loadContext = () ->
             s = []
             $('.actions label').each(->
@@ -91,6 +93,9 @@ class Console
                                 callbacks.save()
                     setTimeout(bench, 0)
                 setTimeout(rest, 0)
+
+            animate: ->
+                viewportRenderer.animate()
 
             generate: () ->
                 Math.seedrandom(context.seed)
@@ -166,15 +171,14 @@ class Console
         scene = new THREE.Scene()
         light = new THREE.DirectionalLight(0xffffff)
         light.position.set(200, 200, 0)
-        scene.add(light)
-
+        #scene.add(light)
 
         # The vieport is a point of view of the scene.
         viewport = new Viewport({
             x: 0, y: 0,
             width: 1, height: 1,
             camera: camera,
-            #controls: controls,
+            controls: controls,
         })
 
          # The viewport renderer takes a scene and actually displays it in the
