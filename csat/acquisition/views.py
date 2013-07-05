@@ -545,10 +545,10 @@ class SessionThumbnail(detail.SingleObjectMixin, base.View):
 
     def post(self, request, *args, **kwargs):
         session = self.get_object()
+        if session.thumbnail:
+            session.thumbnail.delete(save=False)
         form = forms.ThumbnailForm(request.POST, request.FILES, instance=session)
         if form.is_valid():
-            if session.thumbnail:
-                session.thumbnail.delete(save=False)
             session = form.save(commit=False)
             session.thumbnail_background = session.get_thumbnail_background()
             session.save()
