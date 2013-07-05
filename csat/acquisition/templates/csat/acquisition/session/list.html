@@ -6,25 +6,53 @@
 {% block content %}
 <ul class="session-list tiled-list">
 	{% for session in sessions %}
-	<li class="flip-box inactive session-details">
+	<li class="flip-box session-details {% if session.dark_thumbnail %}dark{% else %}clear{% endif %}" data-background="{{ session.thumbnail_background }}" id="session-{{ session.pk }}">
 		<div class="front-panel">
+			{% if session.thumbnail %}
+			<img class="thumb" src="{{ session.thumbnail.url }}"/>
+			{% else %}
+			<div class="thumb no-thumb"></div>
+			{% endif %}
+
 			<strong>{{ session.name }}</strong>
-			
-			<ul class="detail-list">
-				<li><strong>{{ session.collectors.count() }}</strong> <span class="muted">collector{{ session.collectors.count()|pluralize }}</span></li>
-				<li class="status"><strong>{{ session.STATUSES[session.status] }}</strong> <span class="muted">status</span></li>
-				<li class="btns">
-					<a class="btn" href="{% url "csat:acquisition:session" pk=session.pk %}"><i class="icon-screenshot"></i> View</a>
-					{% if session.status == session.CONFIGURED %}
-					<a class="btn" href="{% url "csat:acquisition:session-edit" pk=session.pk %}"><i class="icon-pencil"></i> Edit</a>
-					{% else %}
-					<button class="btn" disabled="disabled"><i class="icon-pencil"></i> Edit</button>
-					{% endif %}
-				</li>
-			</ul>
+
+			<span class="status {% if session.status == session.CONFIGURED -%}
+				icon-cogs
+				{%- elif session.status == session.RUNNING -%}
+				icon-spinner icon-spin
+				{%- elif session.status == session.FAILED -%}
+				icon-warning-sign
+				{%- elif session.status == session.COMPLETED -%}
+				icon-ok
+				{%- endif -%}"></span>
 		</div>
 		<div class="back-panel">
-			Back
+			<strong>{{ session.name }}</strong>
+			<div class="description">
+				{{ session.description|truncate(100)|markdown }}
+			</div>
+			<div class="collectors muted">{{ session.collectors.count() }} collectors</div>
+			<span class="status {% if session.status == session.CONFIGURED -%}
+				icon-cogs
+				{%- elif session.status == session.RUNNING -%}
+				icon-spinner icon-spin
+				{%- elif session.status == session.FAILED -%}
+				icon-warning-sign
+				{%- elif session.status == session.COMPLETED -%}
+				icon-ok
+				{%- endif -%}"></span>
+
+			<div class="btn-group">
+				<a class="btn" href="{% url "csat:acquisition:session" pk=session.pk %}"><i class="icon-screenshot"></i> Details</a>
+				{% if session.status in (session.COMPLETED, session.FAILED) %}
+				<a class="btn" href="{% url "csat:visualization:standalone-viewer" %}?url={{ session.get_graph_url() }}"><i class="icon-sitemap"></i> Graph</a>
+				{% elif session.status == session.RUNNING %}
+				<button class="btn" disabled="disabled"><i class="icon-sitemap"></i> Graph</button>
+				{% else %}
+				<a class="btn" href="{% url "csat:acquisition:session-edit" pk=session.pk %}"><i class="icon-edit"></i> Edit</a>
+				{% endif %}
+				<a class="btn btn-danger" href="{% url "csat:acquisition:session-delete" pk=session.pk %}?prev={{ request.path }}"><i class="icon-remove"></i> Delete</a>
+			</div>
 		</div>
 	</li>
 	{% endfor %}
@@ -35,9 +63,7 @@
 				<strong>Add new</strong>
 			</a>
 		</div>
-		<div class="back-panel">
-			Back
-		</div>
+		<div class="back-panel"></div>
 	</li>
 </ul>
 {% endblock %}

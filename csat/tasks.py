@@ -157,6 +157,7 @@ class JsonRPCTaskManager(TaskManager):
         self.stream.write(json.dumps({
             'method': 'updateTask',
             'params': [
+                self.tasks.index(task),
                 task.getState()
             ],
         }) + '\n')
@@ -250,6 +251,10 @@ class Task(object):
             self._steps = 0
         self._totalSteps = val
         self._progress = self._steps / self._totalSteps
+
+    def setIndefinite(self):
+        self._steps = self.INDEFINITE
+        self._progress = self.INDEFINITE
 
     def setCompleted(self):
         """

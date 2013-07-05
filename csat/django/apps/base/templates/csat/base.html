@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 {% import 'macros.html' as lib %}
-<html lang="en">
+<html lang="en" class="{% block htmlclass %}{% endblock %}">
 	<head>
 		<meta charset="utf-8" />
 		<title>{% block page_title %}{% endblock %} • CSAT</title>
@@ -9,26 +9,14 @@
 		{{ lib.loadcss("bootstrap") }}
 		{{ lib.loadcss("screen") }}
 		{%- endblock %}
+		{% block extrahead %}{% endblock %}
 	</head>
 	<body>
-		{% block navbar %}
-		<div class="navbar">
-			<div class="navbar-inner">
-				<a class="brand" href="/">CSAT</a>
-				<ul class="nav">
-					<li><a href="{% url 'csat:acquisition:session-index' %}">Data acquisition</a></li>
-					<li><a href="{% url 'csat:visualization:database-list' %}">Visualize</a></li>
-				</ul>
-			</div>
-		</div>
-		{% endblock %}
-
-		{% block content %}{% endblock %}
-
-		{% block scripts -%}
+		{%- block content %}{% endblock -%}
+		
+		{%- block scripts -%}
 		{{ lib.loadjs("base_libs") }}
 		{{ lib.loadjs("master") }}
-		{%- endblock %}
+		{%- endblock -%}
 	</body>
 </html>
-

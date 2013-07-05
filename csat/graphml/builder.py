@@ -30,6 +30,7 @@ class Node(_AttributesProxyMixin, object):
         self._id = int(id)
         self._attributes = attributes if attributes else {}
         self._subgraph = None
+        self._edges = set()
 
     def __repr__(self):
         return 'Node({})'.format(self.id)
@@ -43,14 +44,24 @@ class Node(_AttributesProxyMixin, object):
 
         return id
 
-    def subgraph(self, default_direction=None):
+    @property
+    def path(self):
+        path = (self._id, )
+
+        if self._graph._parent:
+            path += self._graph._parent.path
+
+        return path
+
+    def subgraph(self, default_direction=None, attributes=None):
         if self._subgraph is not None:
             raise ValueError('This node already has a subgraph.')
 
         if default_direction is None:
             default_direction = self._graph.default_direction
 
-        self._subgraph = Graph(None, default_direction, _parent=self)
+        self._subgraph = Graph(None, default_direction, attributes,
+                               _parent=self)
         return self._subgraph
 
     @classmethod
@@ -86,18 +97,19 @@ class Node(_AttributesProxyMixin, object):
 
         return node
 
-    def merge(self, other, keys):
+    def merge(self, other):
         # Merge data
-        for k in other:
-            #if k in self and self[k] != other[k]:
-            #    raise ValueError('Cant merge key: {}'.format(k))
-            self[k] = other[k]
+        self._attributes.update(other._attributes)
 
         # Merge subgraphs
         if other._subgraph is not None:
             if self._subgraph is None:
                 self.subgraph(other._subgraph.default_direction)
-            self._subgraph.merge(other._subgraph, keys)
+            id_map = self._subgraph.merge(other._subgraph)
+        else:
+            id_map = None
+        return id_map
+
 
 
 class Edge(_AttributesProxyMixin, object):
@@ -109,6 +121,8 @@ class Edge(_AttributesProxyMixin, object):
         self._attributes = attributes if attributes else {}
         self._id = int(id) if id is not None else None
         self._directed = directed
+        self._source._edges.add(self)
+        self._target._edges.add(self)
 
     @property
     def id(self):
@@ -203,7 +217,7 @@ class Attribute(object):
         'long': (lambda x: str(int(x)), lambda x: int(x.text)),
         'float': (lambda x: str(float(x)), lambda x: float(x.text)),
         'double': (lambda x: str(float(x)), lambda x: float(x.text)),
-        'string': (lambda x: str(x), lambda x: str(x.text)),
+        'string': (lambda x: unicode(x), lambda x: unicode(x.text)),
     }
 
     def __init__(self, graph, id, domain, name, type, default=None,
@@ -381,8 +395,8 @@ class Graph(_AttributesProxyMixin, object):
             edge = Edge.from_xml(edge_el, document, self)
             key = (edge.source, edge.target)
             if key not in self._edges:
-                self._edges[key] = []
-            self._edges[key].append(edge)
+                self._edges[key] = set()
+            self._edges[key].add(edge)
 
         return self
 
@@ -451,6 +465,14 @@ class Graph(_AttributesProxyMixin, object):
         self._nodes[id] = node
         return node
 
+    def remove_node(self, node):
+        for edge in node._edges:
+            edge._graph.remove_edge(edge)
+        try:
+            del self._nodes[node._id]
+        except KeyError:
+            pass
+
     def edge(self, source_node, target_node, attributes=None, id=None,
                  directed=None):
         """
@@ -470,9 +492,18 @@ class Graph(_AttributesProxyMixin, object):
         try:
             edges = self._edges[key]
         except KeyError:
-            edges = self._edges[key] = []
-        edges.append(edge)
+            edges = self._edges[key] = set()
+        edges.add(edge)
         return edge
+
+    def remove_edge(self, edge):
+        key = (edge.source, edge.target)
+        try:
+            edges = self._edges[key]
+        except KeyError:
+            pass
+        else:
+            edges.discard(edge)
 
     def to_xml(self, document, factory):
         graph = factory('graph', {
@@ -506,29 +537,33 @@ class Graph(_AttributesProxyMixin, object):
 
         return graph
 
-    def merge(self, other, (key, subkeys)):
+    def merge(self, other):
         id_map = {}
+
+        try:
+            key = self['merge_key']
+            key = key if key == other['merge_key'] else None
+        except KeyError:
+            key = None
+
+        depth = len(self._parent.path) if self._parent else 0
+        # Copy attributes
+        self._attributes.update(other._attributes)
 
         # Merge or copy nodes
         for othernode in other.nodes.itervalues():
             copy = False
-            subkey = (None, None)
             if key:
                 try:
                     otherkey = othernode[key]
                 except KeyError:
                     copy = True
                 else:
-                    if subkeys:
-                        try:
-                            subkey = subkeys[otherkey]
-                        except KeyError:
-                            subkey = subkeys['*']
                     for thisnode in self.nodes.itervalues():
                         thiskey = thisnode[key]
                         if thiskey == otherkey:
-                            thisnode.merge(othernode, subkey)
-                            id_map[othernode._id] = thisnode._id
+                            submap = thisnode.merge(othernode)
+                            id_map[othernode._id] = thisnode._id, submap
                             break
                     else:
                         copy = True
@@ -538,13 +573,44 @@ class Graph(_AttributesProxyMixin, object):
             if copy:
                 # Copy node over
                 id = get_unique_id(self._nodes)
-                id_map[othernode._id] = id
-                self.node(id).merge(othernode, subkey)
+                thisnode = self.node(id)
+                submap = thisnode.merge(othernode)
+                id_map[othernode._id] = thisnode._id, submap
+
+        def node_from_path(parent_graph, id_map, path):
+            path = list(path)
+            parent_graph = self
+
+            while len(path) > 1:
+                old_parent_id = path.pop()
+                new_parent_id, id_map = id_map[old_parent_id]
+                parent_graph = parent_graph._nodes[new_parent_id]._subgraph
+
+            old_node_id = path.pop()
+            assert len(path) == 0
+            new_node_id, _ = id_map[old_node_id]
+            new_node = parent_graph._nodes[new_node_id]
+            return new_node
+
 
         # Copy all edges by updating IDs
         for edge in itertools.chain.from_iterable(other._edges.itervalues()):
-            self.edge(id_map[edge.source._id], id_map[edge.target._id],
-                      edge._attributes, None, edge._directed)
+            try:
+                srcpath = edge.source.path
+                if depth:
+                    srcpath = srcpath[:-depth]
+                srcnode = node_from_path(self, id_map, srcpath)
+                dstpath = edge.target.path
+                if depth:
+                    dstpath = dstpath[:-depth]
+                dstnode = node_from_path(self, id_map, dstpath)
+                self.edge(srcnode, dstnode, edge._attributes, None,
+                          edge._directed)
+            except KeyError:
+                raise
+                #print edge.source.path, edge.target.path
+
+        return id_map
 
 
 
@@ -608,13 +674,13 @@ class GraphMLDocument(object):
         self._graphs[id] = Graph(id, default_direction, attributes)
         return self._graphs[id]
 
-    def graph(self, id=None, kwargs=None):
+    def graph(self, id=None, attributes=None):
         id = get_unique_id(self._graphs, id)
-        return self._add_graph(id, Graph.UNDIRECTED, kwargs)
+        return self._add_graph(id, Graph.UNDIRECTED, attributes)
 
-    def digraph(self, id=None, kwargs=None):
+    def digraph(self, id=None, attributes=None):
         id = get_unique_id(self._graphs, id)
-        return self._add_graph(id, Graph.DIRECTED, kwargs)
+        return self._add_graph(id, Graph.DIRECTED, attributes)
 
     def to_xml(self, factory=None):
         if factory is None:
@@ -667,7 +733,7 @@ class GraphMLDocument(object):
         doc = etree.parse(stream)
         return cls.from_xml(doc)
 
-    def merge(self, other, key):
+    def merge(self, other):
         for attr in other._attributes_by_id.values():
             try:
                 self._attributes_by_domain[attr._domain, attr._name]
@@ -681,23 +747,35 @@ class GraphMLDocument(object):
             g1 = self.graph()
 
         [g2] = other.graphs.values()
-        g1.merge(g2, key)
+        g1.merge(g2)
+
+    def normalized(self):
+        doc = GraphMLDocument()
+        doc.merge(self)
+        return doc
 
 
-def merge_graphs(documents, key, into=None):
+def merge_graphs(documents, into=None):
     if into is None:
         into = GraphMLDocument()
     for d in documents:
-        into.merge(d, key)
+        into.merge(d)
     return into
 
 
-def merge_files(files, key):
+def merge_files(files, into=None):
     def graph_gen(files):
         for file in files:
-            with open(file) as fh:
-                yield GraphMLDocument.from_file(fh)
-    return merge_graphs(graph_gen(files), key)
+            if isinstance(file, basestring):
+                with open(file) as fh:
+                    yield GraphMLDocument.from_file(fh)
+            else:
+                yield GraphMLDocument.from_file(file)
+
+    if into:
+        with open(into) as fh:
+            into = GraphMLDocument.from_file(fh)
+    return merge_graphs(graph_gen(files), into)
 
 
 if __name__ == '__main__':

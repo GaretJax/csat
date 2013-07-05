@@ -39,6 +39,14 @@ class ConfiguratorBase(object):
     def key(self):
         pass
 
+    def run(self, request, model, remote):
+        postback = model.create_postback_url(save=False)
+        postback = request.build_absolute_uri(postback)
+        command = self.get_command(model)
+        model.running_instance_id = remote.runCollector(command, postback)
+        model.set_running()
+
+
 
 @implementer(ICollectorFactory, IPlugin)
 class FactoryBase(object):

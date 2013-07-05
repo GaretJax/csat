@@ -74,6 +74,8 @@ class Console
                         start = Date.now()
                         viewportRenderer.stats.begin()
                         for i in [0...context.iter]
+                            #graphRenderer.runLayoutStep()
+                            graphRenderer.nodes.geometry.__dirtyVertices = true
                             viewportRenderer.render()
                         duration = viewportRenderer.stats.end() - start
                         fps = context.iter / duration * 1000.0

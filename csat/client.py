@@ -15,6 +15,10 @@ class RemoteJsonError(RuntimeError):
     pass
 
 
+class CouldNotConnect(RuntimeError):
+    pass
+
+
 class JsonRPCProxy(object):
 
     def __init__(self, host, port):
@@ -53,7 +57,10 @@ class JsonRPCProxy(object):
     def _send(self, payload):
         if self.socket is None:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.connect(self.endpoint)
+            try:
+                self.socket.connect(self.endpoint)
+            except socket.error:
+                raise CouldNotConnect()
         self.socket.send(payload)
 
     def _recv_json(self):

@@ -4,25 +4,22 @@ Runs multiple collectors and gathers the results.
 """
 
 import os
-import json
 import uuid
 import random
 from cStringIO import StringIO
 
-from twisted.application import internet, service
+from twisted.application import service, strports
 from twisted.internet import reactor, protocol, defer, error
-from twisted.protocols import basic
 from twisted.python import log
 from twisted.web import client, http_headers
 from twisted.web.client import FileBodyProducer
 
 from txjsonrpc.netstring import jsonrpc
-from txjsonrpc.jsonrpc import BaseSubhandler
-from txjsonrpc import jsonrpclib
 
 from txws import WebSocketFactory
 
 from csat import queue, tasks
+from csat.protocols import JsonProtocol
 
 
 class CollectorProcessProtocol(protocol.ProcessProtocol):
@@ -84,40 +81,37 @@ class CollectorWrapper(object):
         self.protocol = None
         self.tasks = {}
 
-    def spawn(self):
+    def run(self):
         """
         Spawns a subprocess to run the defined collector.
         """
         self.protocol = CollectorProcessProtocol(self)
         log.msg(' '.join(self.command))
-        self.reactor.spawnProcess(self.protocol, self.command[0], self.command,
+        executable = self.command[0]
+        self.reactor.spawnProcess(self.protocol, executable, self.command,
                                   env=os.environ)
         return self.protocol.whenDone()
-
-    def run(self):
-        """
-        Start listening and spawn the collector.
-        """
-        return self.spawn()
 
     def getTasks(self):
         return self.tasks.values()
 
-    def addTask(self, task):
-        self.tasks[task.uuid] = task
+    def addTask(self, order, task):
+        self.tasks[task.uuid] = [order, task]
         exchange = self.broker.exchange('tasks')
 
         def pub(task):
-            exchange.pub(task, ('task', self.uuid, task.uuid))
+            exchange.pub([order, task], ('task', self.uuid, task.uuid))
         task.observe(pub)
         pub(task)
 
-    def updateTask(self, task):
+    def updateTask(self, order, task):
         if task['uuid'] in self.tasks:
-            self.tasks[task['uuid']].updateState(task)
+            t = self.tasks[task['uuid']]
+            t[0] = order
+            t[1].updateState(task)
         else:
             task = tasks.Task.fromState(task)
-            self.addTask(task)
+            self.addTask(order, task)
 
 
 class CsatCollectionServer(object):
@@ -154,6 +148,7 @@ class CsatCollectionServer(object):
         })
         headers = http_headers.Headers()
         headers.setRawHeaders("Content-Type", [producer.content_type])
+        headers.setRawHeaders("User-Agent", ['CSAT Acquisition Server/0.1'])
 
         agent = client.Agent(reactor)
         d = agent.request("POST", url, headers,
@@ -177,7 +172,7 @@ class CsatCollectionServer(object):
         """
         collector = CollectorWrapper(reactor, command, self.broker)
         upload_task = tasks.Task('Uploading results')
-        collector.addTask(upload_task)
+        collector.addTask(9999, upload_task)
 
         def postback_success((protocol, status)):
             return self.postbackResults(upload_task, str(postback), True,
@@ -190,7 +185,9 @@ class CsatCollectionServer(object):
                                         status.protocol.logger_output)
 
         def clean(_):
-            del self.collectors[collector.uuid]
+            def cleanLater():
+                del self.collectors[collector.uuid]
+            self.reactor.callLater(3600, cleanLater)
 
         def run():
             d = collector.run()
@@ -214,7 +211,13 @@ class ProgressProducerWrapper(object):
 
     def startProducing(self, consumer):
         consumer = ProgressConsumerWrapper(consumer, self.task)
-        return self.producer.startProducing(consumer)
+        d = self.producer.startProducing(consumer)
+        def uploadDone(r):
+            self.task.setIndefinite()
+            self.task.statusText = 'Waiting for server response...'
+            return r
+        d.addCallback(uploadDone)
+        return d
 
     def pauseProducing(self):
         return self.producer.pauseProducing()
@@ -323,61 +326,7 @@ class MultipartFormProducer(object):
             producer.stopProducing()
 
 
-class LineJsonRpc(basic.LineReceiver, jsonrpc.JSONRPC):
-
-    delimiter = '\n'
-
-    def lineReceived(self, line):
-        self.stringReceived(line)
-
-    def sendString(self, line):
-        self.sendLine(line)
-
-
-class JsonProtocolBase(jsonrpc.JSONRPC, object):
-    """
-    Compatibility layer to make jsonrpc.JSONRPC actually behave!
-    """
-
-    def __init__(self):
-        """
-        Call ALL superclass __init__ methods.
-        """
-        jsonrpc.JSONRPC.__init__(self)
-        BaseSubhandler.__init__(self)
-
-    def _cbRender(self, result, req_id):
-        """
-        A result is a result, I don't want to wrap it in a list.
-        """
-        if req_id is None:
-            # This was a notification, don't bother
-            return
-        try:
-            s = jsonrpclib.dumps(result, id=req_id, version=self.version)
-        except:
-            f = jsonrpclib.Fault(self.FAILURE, "can't serialize output")
-            s = jsonrpclib.dumps(f, id=req_id, version=self.version)
-        return self.sendString(s)
-
-    def connectionMade(self):
-        self.MAX_LENGTH = self.factory.maxLength
-        for handler in self.subHandlers.itervalues():
-            handler.transport = self.transport
-
-    def connectionLost(self, reason):
-        for handler in self.subHandlers.itervalues():
-            handler.connectionLost(reason)
-
-    def notify(self, func, *args):
-        payload = {
-            'method': func,
-            'params': args,
-        }
-        self.sendString(json.dumps(payload))
-
-
-class CsatPublicInterface(JsonProtocolBase):
+class CsatPublicInterface(JsonProtocol):
 
     def __init__(self):
         super(CsatPublicInterface, self).__init__()
@@ -386,7 +335,7 @@ class CsatPublicInterface(JsonProtocolBase):
 
     def jsonrpc_getTasksForCollector(self, name):
         tasks = self.factory.server.getCollector(name).getTasks()
-        return [task.getState() for task in tasks]
+        return [(o, task.getState()) for o, task in tasks]
 
     def jsonrpc_echo(self, *params):
         if len(params) == 1:
@@ -394,7 +343,7 @@ class CsatPublicInterface(JsonProtocolBase):
         return params
 
 
-class MessageBrokerInterface(JsonProtocolBase):
+class MessageBrokerInterface(JsonProtocol):
 
     def __init__(self, broker):
         super(MessageBrokerInterface, self).__init__()
@@ -402,8 +351,8 @@ class MessageBrokerInterface(JsonProtocolBase):
         self.exclusive_queues = []
 
     def jsonrpc_exclusiveQueueBind(self, exchange, routing_key, callback):
-        def sendUpdate(task):
-            return self.notify(callback, task.getState())
+        def sendUpdate((order, task)):
+            return self.notify(callback, [order, task.getState()])
 
         queue_name = str(uuid.uuid4())
         queue = self.broker.queue(queue_name)
@@ -419,14 +368,14 @@ class MessageBrokerInterface(JsonProtocolBase):
             queue.close()
 
 
-class CsatCollectorInterface(JsonProtocolBase):
+class CsatCollectorInterface(JsonProtocol):
 
     def __init__(self, collector):
         super(CsatCollectorInterface, self).__init__()
         self.collector = collector
 
-    def jsonrpc_updateTask(self, task):
-        return self.collector.updateTask(task)
+    def jsonrpc_updateTask(self, order, task):
+        return self.collector.updateTask(order, task)
 
 
 class CsatPrivateInterface(CsatPublicInterface):
@@ -436,12 +385,14 @@ class CsatPrivateInterface(CsatPublicInterface):
 server = CsatCollectionServer(reactor)
 application = service.Application('csat-server')
 
+from csat.acquisition.scripts.server import _endpoints as endpoints
+
 # Private facing TCP (netstring) based service, to be used to administer the
 # server.
-tcpService = internet.TCPServer(7001, server.getPrivateFactory())
+tcpService = strports.service(endpoints['private'], server.getPrivateFactory())
 tcpService.setServiceParent(application)
 
 # Public facing websocket-based service, to be used to get information from the
 # web browser.
-wsService = internet.TCPServer(7002, server.getPublicFactory())
+wsService = strports.service(endpoints['public'], server.getPublicFactory())
 wsService.setServiceParent(application)

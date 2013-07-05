@@ -58,7 +58,7 @@ class AcquisitionSessionConfigForm(forms.ModelForm):
 
     class Meta:
         model = models.AcquisitionSessionConfig
-        exclude = ['temporary', 'created', ]
+        fields = ['name', 'description', ]
 
 
 class CollectorConfigForm(forms.ModelForm):
@@ -75,6 +75,9 @@ class CollectorConfigForm(forms.ModelForm):
                    'result', 'received', 'configurator',)
 
     def get_advanced_layout(self):
+        return None
+
+    def get_basic_layout(self):
         return None
 
     def get_layout(self):
@@ -95,6 +98,14 @@ class CollectorConfigForm(forms.ModelForm):
             advanced_link = ''
             advanced_panel = layout.Layout()
 
+        basic_layout = self.get_basic_layout()
+
+        if not basic_layout:
+            basic_layout = layout.Layout(
+                layout.HTML('<p class="nooptions">This collector does not '
+                            'have any configuration option.</p>')
+            )
+
         basic_panel = BasicPanel(
             CollectorFormTitle(),
             layout.HTML(
@@ -102,7 +113,7 @@ class CollectorConfigForm(forms.ModelForm):
                 '<i class="icon-remove"></i>Remove</a></li></ul>'.format(
                     advanced_link)
             ),
-            self.get_basic_layout()
+            basic_layout
         )
 
         return layout.Layout(basic_panel, advanced_panel)
@@ -110,7 +121,7 @@ class CollectorConfigForm(forms.ModelForm):
 
 class ResultsUploadForm(SimpleLayoutMixin, forms.ModelForm):
 
-    successful = forms.BooleanField(required=False)
+    successful = forms.BooleanField(required=False, initial=True)
 
     def __init__(self, *args, **kwargs):
         super(ResultsUploadForm, self).__init__(*args, **kwargs)
@@ -120,3 +131,9 @@ class ResultsUploadForm(SimpleLayoutMixin, forms.ModelForm):
     class Meta:
         model = models.DataCollectorConfig
         fields = ('graph', 'output')
+
+
+class ThumbnailForm(forms.ModelForm):
+    class Meta:
+        model = models.AcquisitionSessionConfig
+        fields = ('thumbnail', )

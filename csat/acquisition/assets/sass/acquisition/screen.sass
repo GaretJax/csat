@@ -50,25 +50,131 @@
 //	&:hover .detail-list .btns
 //		opacity: 1
 
+body > h1, .acquisition-session-config > h1
+	> a, > .muted
+		font-weight: normal
 
-.session-list
+.task .progress .bar.progress-striped,
+.task .progress-danger .bar
+	+transition(none)
+
+.session-list.session-list
 	> li
-		.front-panel
-			width: 230px
-			height: 300px
-			float: left
+		$min-width: 220px
+		$min-height: 300px
+		$padding: 10px
+
+		$i: 20
+		@while $i > 0
+			@media screen and (max-width: ($min-width + 2 * $padding) * ($i + 1))
+				width: (100% / $i)
+			$i: $i - 1
+
+		.back-panel
+			top: 10px
+			bottom: 10px
+			left: 10px
+			right: 10px
+			cursor: default
 
 			> strong
-				padding-bottom: 20px
+				font-size: 18px
+				margin: -5px 0 10px
 				display: block
-				font-family: 'Roboto'
-				font-size: 30px
-				line-height: 30px
-				height: 30px
-				color: #333
 				white-space: nowrap
 				overflow: hidden
 				text-overflow: ellipsis
+
+			.description
+				font-size: 0.93em
+				line-height: 1.3em
+
+			.status
+				position: absolute
+				top: 17px
+				right: 17px
+				color: #999
+				text-shadow: #fff 0 1px 0
+
+			.btn-group
+				position: absolute
+				bottom: 1px
+				left: 1px
+				right: 1px
+				overflow: hidden
+
+				.btn
+					width: 33.7%
+					border-bottom: 0
+					padding: 7px 0
+					+box-sizing(border-box)
+
+					&:first-child
+						border-left: 0
+						+border-top-radius(0)
+						+border-bottom-left-radius(2px)
+					&:last-child
+						border-right: 0
+						+border-top-radius(0)
+						+border-bottom-right-radius(2px)
+
+		.front-panel
+			width: 100%
+			height: 100%
+			float: left
+			padding: 1px
+			cursor: pointer
+			//+transition(opacity .4s, background .4s, box-shadow .4s)
+
+			.thumb
+				+border-radius(3px)
+				width: 100%
+
+			> strong
+				position: absolute
+				bottom: 1px
+				left: 1px
+				right: 1px
+				display: block
+				font-family: 'Roboto'
+				font-size: 26px
+				line-height: 26px
+				height: 30px
+				padding: 20px 35px 9px 15px
+				color: #fff
+				white-space: nowrap
+				overflow: hidden
+				text-overflow: ellipsis
+				text-shadow: rgba(#000, .6) 0 0 5px
+				+background-image(linear-gradient(top, rgba(#000, 0) 0px, rgba(#000, .4) 40px))
+				+border-bottom-radius(3px)
+
+			.status
+				position: absolute
+				bottom: 1px
+				right: 1px
+				font-size: 17px
+				padding: 13px
+				line-height: 17px
+				color: #fff
+				opacity: .8
+				text-shadow: rgba(#000, .3) 0 0 3px
+
+			&:hover
+				opacity: 1
+				border-color: #ccc
+				background: #f6f6f6
+				+box-shadow(#fff 0px 0px 10px inset, rgba(#000, 0.1) 0px 0px 10px)
+
+		&.clear .front-panel
+			> strong
+				text-shadow: rgba(#fff, 1) 0 0 3px
+				color: #000
+				+background-image(linear-gradient(top, rgba(#fff, 0) 0px, rgba(#fff, .8) 40px))
+
+			.status
+				text-shadow: rgba(#fff, 1) 0 0 3px
+				color: #000
 
 	> .add-new
 		text-align: center
@@ -78,8 +184,10 @@
 			+transition(opacity .4s, background .4s, box-shadow .4s)
 
 			a
-				width: 230px
-				height: 300px
+				width: 100%
+				height: 100%
+				padding: 0
+				margin: 0
 				+box-sizing(border-box)
 
 				> strong
@@ -94,18 +202,25 @@
 					text-overflow: ellipsis
 
 				.icon-plus
-					margin-top: 60px
+					display: block
+					margin-top: 45px
 					font-size: 100px
 					color: rgba(#000, .1)
 
-			&:hover
-				opacity: 1
-				background: #f6f6f6
-				+box-shadow(#fff 0px 0px 10px inset, rgba(#000, 0.1) 0px 0px 10px)
+.inline-list
+	margin: 0
+	padding: 0
+
+	li
+		display: inline
+
+	li + li:before
+		content: '•'
+		padding: 10px
 
 .acquisition-session-config
 	max-width: 1000px
-	margin: 0 auto
+	margin: 0
 
 	> form
 		position: relative
@@ -146,20 +261,26 @@
 
 	.available-collectors, .configured-collectors
 		> h1
-			font-size: $baseFontSize
-			margin: 0 0 5px
+			font-size: $baseFontSize * 1.2
+			margin: 0 0 10px
 			line-height: $baseLineHeight
-			font-weight: normal
+			font-weight: bold
 
 	> .form-actions
 		+box-sizing(border-box)
+
+		text-align: right
+
+		> .btn:first-child, > form:first-child
+			margin-bottom: 0
+			float: left
 
 		.session-save
 			min-width: 80px
 
 .configured-collectors > ul
 	padding: 0
-	margin: -15px 0 10px
+	margin: -10px 0 10px
 
 	> li
 		margin-top: 20px
@@ -407,6 +528,29 @@
 		> .tasks
 			background: rgba(#fff, .8)
 
+	&.failed
+		background: rgba(#f3bebe, .3)
+		border-color: #e4b4b4
+		+box-shadow(#fff 0px 0px 5px 1px inset)
+
+		.close
+			display: block
+			color: #980000
+			opacity: 0.3
+
+			&:hover
+				opacity: 0.5
+
+		.icon-danger
+			color: #980000
+
+		> strong
+			color: #980000
+
+		> .tasks
+			background: rgba(#fff, .8)
+
+
 .tasks
 	margin: 0
 	border: 1px solid #ccc
@@ -452,6 +596,10 @@
 			background-color: #ccc
 			+background-image(linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent))
 
+	.progress-success
+		.percentage
+			display: none
+
 	p.status
 		margin: 2px 0 0 200px
 		font-size: .9em
@@ -460,7 +608,7 @@
 .task + .task
 	border-top: 1px solid #ddd
 
-.session-details
+#session-summary .session-details
 	th
 		width: 100px
 		white-space: nowrap
@@ -472,7 +620,26 @@
 		> *
 			border-bottom: 1px solid #ddd
 
-	tfoot
+	.thumb
+		width: 1%
+		padding-left: 2px
+		border-bottom: 1px solid #ddd
+
+
+	.thumb div
+		+border-radius(4px)
+		border: 1px solid #ccc
+		padding: 1px
+		width: 174px
+		height: 174px
+
+	.thumb img
+		+border-radius(3px)
+		display: block
+		max-width: 200px
+		width: 174px
+
+	.actions
 		th
 			vertical-align: middle
 
@@ -482,3 +649,59 @@
 		.btn
 			width: 100px
 			+box-sizing(border-box)
+
+.collector-config .front-panel .nooptions
+	margin: 20px
+	text-align: center
+	text-shadow: #fff 0 1px 0
+	color: #aaa
+
+#session-results
+	thead tr
+		opacity: 1
+
+	td
+		vertical-align: middle
+
+	tr
+		font-size: .95em
+		opacity: .8
+		th[scope=row]
+			color: #666
+			padding-left: 1em
+			&:before
+				vertical-align: -5%
+				color: #999
+				font-weight: normal
+				content: "↳ "
+
+	.icon-warning
+		color: #dd9900
+
+		&:before
+			color: #ffbb00
+
+	tr.merged
+		font-size: 1.1em
+		opacity: 1
+		//background: rgba(#ffc, .5)
+		th
+			vertical-align: middle
+			font-size: 1.2em
+			color: #000
+			padding-left: 10px
+
+			&:before
+				display: none
+				content: ""
+
+		td .btn
+			width: 177px
+			opacity: 1
+
+	td:nth-child(5)
+		padding-right: 25px
+		text-align: right
+
+	td .btn
+		width: 120px

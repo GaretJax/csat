@@ -72,17 +72,23 @@ class PipermailCollector(object):
     def _init_graph(self):
         self.graph = GraphMLDocument()
 
+        self.graph.attr(Attribute.GRAPH, 'merge_key')
+
         self.graph.attr(Attribute.NODE, 'domain')
 
         self.graph.attr(Attribute.NODE, 'email')
         self.graph.attr(Attribute.NODE, 'mails_sent', 'int')
 
-        self.graph.attr(Attribute.EDGE, 'count')
+        self.graph.attr(Attribute.EDGE, 'count', 'int')
         self.graph.attr(Attribute.ALL, 'type')
 
-        self.subgraph = self.graph.digraph().node(1, {
+        self.subgraph = self.graph.digraph(None, {
+            'merge_key': 'domain'
+        }).node(None, {
             'domain': 'people'
-        }).subgraph()
+        }).subgraph(None, {
+            'merge_key': 'email'
+        })
 
     def setup_twisted_logging(self):
         observer = log.PythonLoggingObserver()

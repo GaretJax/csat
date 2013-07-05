@@ -17,4 +17,6 @@ class ConfigForm(forms.CollectorConfigForm):
         )
 
     def get_advanced_layout(self):
-        return None
+        return layout.Layout(
+            layout.Field('keep_history'),
+        )

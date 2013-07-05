@@ -53,7 +53,7 @@ class RunnerBase(object):
     def run_as_subcommand(self, args):
         self.logger = self.get_logger()
         self.args = args
-        self._run()
+        return self._run()
 
     def run(self, arguments=None):
         if not arguments:
@@ -61,7 +61,7 @@ class RunnerBase(object):
 
         self.logger = self.get_logger()
         self.args = self.build_parser().parse_args(arguments)
-        self._run()
+        return self._run()
 
     def _run(self):
         # Build argument parser and parse command line
@@ -70,9 +70,11 @@ class RunnerBase(object):
         # Execute command
         self.log = self.logger.get_logger('runner')
         self.log.info('Starting collection process...')
+
+        task_manager = self.get_task_manager()
         try:
             collector = self.collector.build_collector(
-                self.get_task_manager(),
+                task_manager,
                 self.logger.get_logger('collector'),
                 self.args
             )
@@ -90,6 +92,13 @@ class RunnerBase(object):
         else:
             self.log.info('Collection process terminated.')
             res = 0
+        finally:
+            for task in task_manager.tasks:
+                if task.status not in (task.COMPLETED, task.FAILED):
+                    task.status = task.FAILED
+                    task.statusText = ('Task failed to complete before process'
+                                       ' termination.')
+
 
         # Shutdown logging
         self.logger.stop(res)

@@ -5,17 +5,28 @@ class Viewport
     ###
     constructor: (params) ->
         {@x, @y, @width, @height, @camera, @controls} = params
-        this.camera.position.z = 90
 
     prepareScene: (scene) ->
-        this.camera.lookAt(scene.position)
+        @camera.lookAt(scene.position)
+
+    getFov: (domHeight) =>
+        if not @camera._ratio?
+            height = Math.tan(@camera.fov / 2) * @camera.position.z * 2
+            @camera._ratio = height / domHeight
+
+        Math.atan(
+            (domHeight * @camera._ratio) / (2 * @camera.position.z)
+        ) * 2 / Math.PI * 180
 
     prepareRenderer: (renderer, width, height) ->
+        fov = @getFov(height)
+
         x = Math.floor(width * this.x)
         y = Math.floor(height * this.y)
         w = Math.floor(width * this.width)
         h = Math.floor(height * this.height)
-        this.camera.aspect = w / h
+        @camera.aspect = w / h
+        @camera.fov = fov
         renderer.setViewport(x, y, w, h)
         renderer.setScissor(x, y, w, h)
         renderer.enableScissorTest(true)
@@ -46,38 +57,36 @@ class RotatingViewport extends Viewport
 
 
 class MultipleViewportsRenderer
-    constructor: (@container, @scene, @viewports) ->
-        this.renderer = new THREE.WebGLRenderer({
+    constructor: (@container, @scene, @viewports, @stats) ->
+        @renderer = new THREE.WebGLRenderer({
             antialias: true,
+            preserveDrawingBuffer: true
         })
-        this.container.append(this.renderer.domElement)
+        @renderer.setClearColor(0xffffff, 1)
+        @container.append(this.renderer.domElement)
 
-        this.stats = new Stats()
-        this.stats.setMode(1)
-        this.stats.domElement.style.position = 'absolute'
-        this.stats.domElement.style.left = '0px'
-        this.stats.domElement.style.top = '0px'
-        $(this.stats.domElement).appendTo(this.container)
+        @initialWidth = this.container.width()
+        @initialHeight = this.container.height()
+        @renderer.setSize(@initialWidth, @initialHeight)
 
     render: ->
         [width, height] = [this.container.width(), this.container.height()]
 
-        this.renderer.setSize(width, height)
+        @renderer.setSize(width, height)
+        #@renderer.setViewport(-@initialWidth/2, -@initialHeight/2, @initialWidth, @initialHeight)
 
         width *= window.devicePixelRatio
         height *= window.devicePixelRatio
 
-        for viewport in this.viewports
+        for viewport in @viewports
+            viewport.prepareScene(@scene)
+            viewport.prepareRenderer(@renderer, width, height)
             viewport.camera.updateProjectionMatrix()
-            viewport.prepareScene(this.scene)
-            viewport.prepareRenderer(this.renderer, width, height)
-            this.renderer.render(this.scene, viewport.camera)
-            if viewport.controls?
-                viewport.controls.update()
+            @renderer.render(@scene, viewport.camera)
 
     animate: ->
         animate = =>
             requestAnimationFrame(animate)
             this.render()
-            this.stats.update()
+            @stats.update()
         animate()

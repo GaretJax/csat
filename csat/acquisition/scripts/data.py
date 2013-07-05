@@ -14,10 +14,12 @@ def merge():
                             ' write the graph to stdout.')
     args = parser.parse_args()
 
-    d = merge_files(args.file1 + args.files, key=('domain', {
-        'people': ('email', None),
-        'components': ('package', None),
-    }))
+    d = merge_files(args.file1 + args.files)
+
+    #, key=('domain', {
+    #    'people': ('email', None),
+    #    'components': ('package', None),
+    #}))
 
     if args.output == '-':
         d.to_file(sys.stdout)

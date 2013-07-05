@@ -189,10 +189,10 @@ class Random(Graph):
     key = 'rand'
     description = 'Random graph'
 
-    domains = 5
-    nodes = 500
-    edges = 2000
-    inside_edge_ratio = 0.95
+    domains = 3
+    nodes = 200
+    edges = 400
+    inside_edge_ratio = 0.65
     seed = 120
 
     def build_domains(self, root, domains):
@@ -215,13 +215,12 @@ class Random(Graph):
             domain = random.choice(domains)
             domain.node()
 
-        print len(domain.nodes)
-
         for i in xrange(self.edges):
             from_domain = to_domain = edge_graph = random.choice(domains)
 
             if random.random() > self.inside_edge_ratio:
-                to_domain = random.choice(domains)
+                while to_domain == from_domain:
+                    to_domain = random.choice(domains)
                 edge_graph = root
 
             from_node = random.choice(from_domain.nodes.values())

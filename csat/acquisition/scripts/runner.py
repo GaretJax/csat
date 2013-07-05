@@ -34,7 +34,7 @@ def main():
     parser.add_argument('-l', '--list', action=ListAction, const=collectors)
 
     args = parser.parse_args()
-    args.runner.run_as_subcommand(args)
+    return args.runner.run_as_subcommand(args)
 
 
 if __name__ == '__main__':

@@ -7,7 +7,7 @@ from csat.acquisition import get_collectors, models
 
 
 class AcquisitionSessionConfigAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'started', 'temporary')
+    list_display = ('id', 'name', 'started', 'completed', 'temporary', 'status')
 admin.site.register(models.AcquisitionSessionConfig,
                     AcquisitionSessionConfigAdmin)
 
@@ -17,6 +17,7 @@ class DataCollectorConfigAdmin(PolymorphicChildModelAdmin):
 
 
 class GenericDataCollectorConfigAdmin(PolymorphicParentModelAdmin):
+    list_display = ('id', 'name', 'session_config')
     base_model = models.DataCollectorConfig
 
     def get_child_models(self):

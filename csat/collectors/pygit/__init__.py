@@ -23,8 +23,13 @@ class GitPythonCollector(base.CollectorBase):
     def build_parser(self, base):
         parser = super(GitPythonCollector, self).build_parser(base)
         parser.add_argument('--revspec', '-r', default='master')
+        parser.add_argument('--history', '-k', action='store_true',
+                            help=(
+                                'Keep history. Do not remove nodes/edges when '
+                                'modules/dependencies are removed but register'
+                                ' the action in an attribute.'
+                            ))
         parser.add_argument('repo_url')
-        #rev: 'trunk' #'63be1f698a60d572fc6436cbc0af9e0fcff9713e..a0626e'
         parser.add_argument('package_name')
         return parser
 
@@ -37,13 +42,20 @@ class GitPythonCollector(base.CollectorBase):
         return models.Config
 
     def get_command(self, model):
-        return ['csat-collect', self.key, '-r', model.revspec, model.repo_url,
-                model.package]
+        cmd = ['csat-collect', self.key, '-r', model.revspec]
+
+        if model.keep_history:
+            cmd += ['-h']
+
+        cmd += [model.repo_url, model.package]
+
+        return cmd
 
     def build_collector(self, task_manager, logger, args):
         from .collector import GitPythonCollector
         return GitPythonCollector(task_manager, logger, args.repo_url,
-                                  args.revspec, args.package_name)
+                                  args.revspec, args.package_name,
+                                  args.history)
 
 
 if git is not None:

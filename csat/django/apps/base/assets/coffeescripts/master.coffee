@@ -1,8 +1,8 @@
 (($) ->
 	$ ->
 		$('.flip-box').click(->
-			if not $(this).hasClass('inactive')
-				$(this).flipBoxFlip()
+            #if not $(this).hasClass('inactive')
+            #		$(this).flipBoxFlip()
 		)
 		$(':file').filestyle({
 			icon: true,

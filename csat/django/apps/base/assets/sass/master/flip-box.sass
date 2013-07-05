@@ -20,7 +20,8 @@
 		bottom: 0
 		overflow: auto
 
-	&:not(.flipped)
+	&:not(.flipped), &:not(:target)
+		z-index: 900
 		.front-panel
 			opacity: 1
 			+transform(rotateY(0deg))
@@ -35,7 +36,8 @@
 			+transition-delay(0s, $hd)
 			+transition-timing-function(ease-in)
 
-	&.flipped
+	&.flipped, &:target
+		z-index: 1000
 		.front-panel
 			opacity: 0
 			+transform(rotateY(90deg))
@@ -58,8 +60,10 @@
 	font-size: 0
 
 	> .flip-box
+		float: left
 		display: inline-block
-		margin: 10px
+		padding: 10px
+		+box-sizing(border-box)
 
 		> .front-panel,
 		> .back-panel

@@ -2,15 +2,16 @@ from StringIO import StringIO
 import logging
 import os
 
-from django.core.files.base import File
+from django.core.files.base import File, ContentFile
 from django.views.generic import edit, list, base, detail
 from django.shortcuts import get_object_or_404
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.utils.translation import ugettext_lazy as _
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.utils.timezone import now
 from django.core.servers.basehttp import FileWrapper
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 
 from csat import acquisition, client
 from csat.graphml import builder
@@ -31,6 +32,29 @@ class SessionsIndex(list.ListView):
 session_index = SessionsIndex.as_view()
 
 
+
+def run_acquisition_session(request, session):
+    session.started = now()
+
+    collector_server = client.JsonRPCProxy(
+        **settings.ACQUISITION_SERVER['private'])
+
+    try:
+        for collector in session.collectors.all():
+            collector.get_collector().run(request, collector, collector_server)
+    except client.CouldNotConnect:
+        # TODO: Acquisition server offline
+        raise
+
+    graph = builder.GraphMLDocument()
+    graph.attr(builder.Attribute.GRAPH, 'thumbnail')
+    graph.graph()['thumbnail'] = session.get_thumbnail_url()
+    fh = graph.to_file(StringIO())
+    session.graph.save('graph', File(fh))
+
+    session.save()
+
+
 class SessionRun(detail.SingleObjectMixin, base.View):
     queryset = models.AcquisitionSessionConfig.objects.filter(temporary=False,
                                                               started=None)
@@ -42,26 +66,8 @@ class SessionRun(detail.SingleObjectMixin, base.View):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        self.object.started = now()
-
-        collector_server = client.JsonRPCProxy('localhost', 7001)
-
-        for collector in self.object.collectors.all():
-            try:
-                collector.running_instance_id = collector_server.runCollector(
-                    collector.get_collector().get_command(collector),
-                    request.build_absolute_uri(collector.create_postback_url(
-                        save=False)),
-                )
-            except Exception:
-                # TODO: Pass exception results to the function and save them
-                #collector.set_failed()
-                raise
-            else:
-                collector.set_running()
-
-        self.object.save()
-
+        if not self.object.started and self.object.collectors.count():
+            run_acquisition_session(request, self.object)
         return HttpResponseRedirect(self.get_success_url())
 
 session_run = SessionRun.as_view()
@@ -79,6 +85,15 @@ class SessionReset(detail.SingleObjectMixin, base.View):
         self.object = self.get_object()
         self.object.started = None
         self.object.completed = None
+        self.object.thumbnail_background = None
+        if self.object.thumbnail:
+            self.object.thumbnail.delete(save=False)
+        path = os.path.join(os.path.dirname(__file__), 'static', 'images', 'no-thumb.png')
+        with open(path) as fh:
+            self.object.thumbnail.save('thumb', File(fh))
+        self.object.thumbnail_background = self.object.get_thumbnail_background()
+        if self.object.graph:
+            self.object.graph.delete(save=False)
         for collector in self.object.collectors.all():
             collector.started = None
             collector.completed = None
@@ -86,9 +101,9 @@ class SessionReset(detail.SingleObjectMixin, base.View):
             collector.result_id = None
             collector.status = collector.READY
             if collector.graph:
-                collector.graph.delete()
+                collector.graph.delete(save=False)
             if collector.output:
-                collector.output.delete()
+                collector.output.delete(save=False)
             collector.save()
         self.object.save()
 
@@ -100,7 +115,19 @@ session_reset = SessionReset.as_view()
 class SessionDetails(detail.DetailView):
     queryset = models.AcquisitionSessionConfig.objects.filter(temporary=False)
     context_object_name = 'session'
-    template_name = 'csat/acquisition/session/details.html'
+
+    def get_template_names(self):
+        if self.request.is_ajax():
+            return ['csat/acquisition/session/_results.html']
+        else:
+            return ['csat/acquisition/session/details.html']
+
+    def get_context_data(self, **kwargs):
+        context = super(SessionDetails, self).get_context_data(**kwargs)
+        context['acquisition_server'] = '{host}:{port}'.format(
+            **settings.ACQUISITION_SERVER['public']
+        )
+        return context
 
 session_view = SessionDetails.as_view()
 
@@ -129,6 +156,7 @@ class SessionEditor(edit.UpdateView):
         #import time, random
         #time.sleep(random.random() * 5)
         context = super(SessionEditor, self).get_context_data(**kwargs)
+        context['create'] = self.object.temporary == True
         context['collectors_types'] = acquisition.get_collectors()
         return context
 
@@ -154,6 +182,11 @@ class SessionCreator(base.RedirectView):
     def get_redirect_url(self):
         session = models.AcquisitionSessionConfig.objects.create(
             temporary=True)
+        path = os.path.join(os.path.dirname(__file__), 'static', 'images', 'no-thumb.png')
+        with open(path) as fh:
+            session.thumbnail.save('thumb', File(fh))
+        session.thumbnail_background = session.get_thumbnail_background()
+        session.save()
         return reverse('csat:acquisition:session-edit', kwargs={
             'pk': session.pk
         })
@@ -294,33 +327,49 @@ class CollectorResult(edit.UpdateView):
 
     def form_valid(self, form):
         self.object = form.save(commit=False)
+        session = self.object.session_config
 
         # TODO: Validate graphml schema
 
         if form.cleaned_data['successful']:
-            self.object.set_completed()
+            try:
+                # TODO: Concurrency issue here!
+                graph = builder.merge_files(
+                    [self.request.FILES['graph']],
+                    session.graph.path,
+                )
+                fh = graph.to_file(StringIO())
+                if session.graph:
+                    session.graph.delete(save=False)
+                session.graph.save('graph', File(fh))
+            except:
+                ua = self.request.META.get('HTTP_USER_AGENT', '')
+                if ua.startswith('CSAT Acquisition Server'):
+                    self.object.set_failed()
+                    raise
+                else:
+                    form._errors['graph'] = ['Invalid file.']
+                    return self.form_invalid(form)
+            else:
+                self.object.save()
+                self.object.set_completed()
         else:
+            if 'graph' not in self.request.FILES:
+                self.object.graph.save('graph', ContentFile(''))
+            self.object.save()
             self.object.set_failed()
 
-        active_collectors = self.object.session_config.collectors
+        if 'output' not in self.request.FILES:
+            self.object.output.save('log', ContentFile(''))
+
+        active_collectors = session.collectors
         active_collectors = active_collectors.exclude(
             status=models.DataCollectorConfig.FAILED)
         active_collectors = active_collectors.exclude(
             status=models.DataCollectorConfig.COMPLETED)
 
         if not active_collectors.count():
-            successful =  self.object.session_config.collectors.filter(
-                status=models.DataCollectorConfig.COMPLETED).all()
-            files = [c.graph.path for c in successful]
-
-            # TODO: Find a generic way to do this
-            graph = builder.merge_files(files, key=('domain', {
-                'people': ('email', None),
-                'components': ('package', None),
-            }))
-            fh = graph.to_file(StringIO())
-            self.object.session_config.graph.save('graph', File(fh))
-            self.object.session_config.set_completed()
+            session.set_completed()
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -330,7 +379,10 @@ class CollectorResult(edit.UpdateView):
         result_id = self.kwargs['result_id']
         try:
             return queryset.get(result_id=result_id,
-                                status=models.DataCollectorConfig.RUNNING)
+                                status__in=(
+                                    models.DataCollectorConfig.RUNNING,
+                                    models.DataCollectorConfig.READY,
+                                ))
         except models.DataCollectorConfig.DoesNotExist:
             raise Http404(_("No %(verbose_name)s found matching the query") %
                           {'verbose_name': queryset.model._meta.verbose_name})
@@ -339,18 +391,20 @@ collector_upload_results = csrf_exempt(CollectorResult.as_view())
 
 
 class FileViewer(base.TemplateResponseMixin, base.View):
+    raw_format = 'txt'
+
     def get_template_names(self):
         return 'csat/generic/file-viewer.html'
 
     def is_raw_url(self):
-        return 'html' not in self.kwargs or not self.kwargs['html']
+        return self.kwargs['format'] != 'html'
 
     def get_raw_url(self):
         if self.is_raw_url():
             return self.request.get_full_path()
         else:
             url = self.request.get_full_path().split('?', 1)
-            url[0] = url[0][:-5]
+            url[0] = url[0].rsplit('.', 1)[0] + '.' + self.raw_format
             return '?'.join(url)
 
     def get(self, request, *args, **kwargs):
@@ -424,7 +478,7 @@ class CollectorViewLog(FileViewer):
                           {'verbose_name': queryset.model._meta.verbose_name})
         return self.object.output
 
-collector_view_log = CollectorViewLog.as_view()
+collector_view_log = CollectorViewLog.as_view(raw_format='txt')
 
 
 class CollectorViewResults(FileViewer):
@@ -449,7 +503,7 @@ class CollectorViewResults(FileViewer):
                           {'verbose_name': queryset.model._meta.verbose_name})
         return self.object.graph
 
-collector_view_results = CollectorViewResults.as_view()
+collector_view_results = CollectorViewResults.as_view(raw_format='graphml')
 
 
 class SessionViewResults(FileViewer):
@@ -461,7 +515,7 @@ class SessionViewResults(FileViewer):
         return 'application/xml'
 
     def get_filename(self):
-        return 'session_{}-merged.graphml'.format(self.object.pk)
+        return 'session-{}-merged.graphml'.format(self.object.pk)
 
     def get_file(self):
         try:
@@ -472,4 +526,35 @@ class SessionViewResults(FileViewer):
                           {'verbose_name': models.AcquisitionSessionConfig._meta.verbose_name})
         return self.object.graph
 
-session_view_results = SessionViewResults.as_view()
+session_view_results = SessionViewResults.as_view(raw_format='graphml')
+
+
+class SessionThumbnail(detail.SingleObjectMixin, base.View):
+    queryset = models.AcquisitionSessionConfig.objects.filter()
+
+    def get(self, request, *args, **kwargs):
+        session = self.get_object()
+        if not session.thumbnail:
+            path = os.path.join(os.path.dirname(__file__), 'static', 'images', 'no-thumb.png')
+            with open(path) as fh:
+                image = fh.read()
+        else:
+            with session.thumbnail as fh:
+                image = fh.read()
+        return HttpResponse(image, 'image/png')
+
+    def post(self, request, *args, **kwargs):
+        session = self.get_object()
+        form = forms.ThumbnailForm(request.POST, request.FILES, instance=session)
+        if form.is_valid():
+            if session.thumbnail:
+                session.thumbnail.delete(save=False)
+            session = form.save(commit=False)
+            session.thumbnail_background = session.get_thumbnail_background()
+            session.save()
+            return HttpResponse()
+        else:
+            return HttpResponseBadRequest()
+
+
+session_thumbnail = csrf_exempt(SessionThumbnail.as_view())

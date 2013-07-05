@@ -1,3 +1,5 @@
 csat.egg-info
 dropin.cache
+.sass-cache
+.webassets-cache
 /temp

@@ -30,7 +30,7 @@ class Import(namedtuple('Import', ['module', 'name', 'alias', 'node'])):
 
 class Module(object):
     def __init__(self, path, base_path):
-        self.base_path = base_path
+        self.base_path = base_path.rstrip('/')
         self.abspath = os.path.join(base_path, path)
         self.path = self.abspath[len(self.base_path) + 1:]
 
