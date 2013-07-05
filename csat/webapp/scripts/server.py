@@ -50,6 +50,7 @@ def runserver():
         ]
     else:
         options += [
+            '--pidfile=',
             '-n',
         ]
 
