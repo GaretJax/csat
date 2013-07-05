@@ -48,13 +48,11 @@ setup(
     description='Complex Software Analysis Toolkit',
     author='Jonathan Stoppani',
     author_email='jonathan@stoppani.name',
-    url='https://github.com',
+    url='https://github.com/GaretJax/csat',
     license='MIT',
     packages=find_packages(),
     package_dir={'csat': 'csat'},
-    package_data={
-        #'': [''],
-    },
+    include_package_data=True,
     install_requires=Setup.requirements('requirements.txt'),
     entry_points=Setup.read('entry-points.ini', True),
 )
