@@ -1,4 +1,6 @@
 csat.egg-info
+dist
+build
 dropin.cache
 .sass-cache
 .webassets-cache
