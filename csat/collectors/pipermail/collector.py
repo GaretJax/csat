@@ -9,8 +9,6 @@ from dateutil import parser as date_parser
 
 from bs4 import BeautifulSoup
 
-from lxml import etree
-
 from twisted.python import log
 from twisted.internet import defer, reactor, task
 from twisted.web import client
