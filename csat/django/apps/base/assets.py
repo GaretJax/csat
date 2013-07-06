@@ -35,7 +35,7 @@ external_libraries = make_js_bundle('base_libs', [
     jquery_ui,
     bootstrap.js,
     plugins,
-], filters=['jsmin'])
+], filters=[])
 
 all_js = make_js_bundle('master', [
     'coffeescripts/master.coffee',

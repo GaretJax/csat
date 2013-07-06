@@ -10,4 +10,4 @@ js = make_js_bundle('bootstrap', [
     'js/bootstrap-tooltip.js',
     'js/bootstrap-*.js',
     'js/bootstrap-popover.js',
-], filters=['jsmin'])
+], filters=[], register=False)
