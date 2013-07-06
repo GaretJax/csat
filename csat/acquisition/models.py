@@ -104,10 +104,10 @@ class AcquisitionSessionConfig(models.Model):
             image = Image.open(fh)
             image = image.resize((200, 200)).convert('RGB')
             w, h = image.size
-            image = image.crop((0, h - 70, w, h))
+            image = image.crop((0, h - 40, w, h - 5))
             image = image.convert('P', palette=Image.ADAPTIVE, colors=3)
             image.putalpha(0)
-            colors = image.getcolors(200 * 200)
+            colors = image.getcolors(w * h)
             colors = sorted(colors, reverse=True)
             color = colors[0][1]
 
