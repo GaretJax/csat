@@ -1,5 +1,6 @@
 include entry-points.ini
 include requirements.txt
+include fabfile.py
 recursive-include csat *.coffee *.sass *.html *.scss
 recursive-include csat/acquisition *.png
 recursive-include csat/visualization *.png *.gif *.js
