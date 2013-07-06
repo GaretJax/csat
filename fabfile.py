@@ -1,6 +1,7 @@
 import os
 import contextlib
 import subprocess
+import signal
 
 from fabric.api import env, sudo, cd, settings, prefix, task, local
 
@@ -103,7 +104,21 @@ def weblog():
 
 
 @task
-def rundev():
+def dev():
+    processes = []
+    for p in ['devserver', 'watch', 'livereload']:
+        processes.append(subprocess.Popen(['fab', p]))
+
+    try:
+        for p in processes:
+            p.wait()
+    except KeyboardInterrupt:
+        for p in processes:
+            p.send_signal(signal.SIGINT)
+
+
+@task
+def devserver():
     local_django('runserver', debug=True)
 
 
@@ -116,6 +131,7 @@ def watch():
 def livereload():
     process = subprocess.Popen([
         'bundle', 'exec', 'guard',
+        '-i',
         '-w', env.local_envdir,
         '-G', os.path.join(os.path.dirname(__file__), 'Guardfile'),
     ])
@@ -123,6 +139,7 @@ def livereload():
         process.wait()
     except KeyboardInterrupt:
         process.terminate()
+        process.kill()
 
 
 @task
