@@ -573,7 +573,7 @@ class Graph(_AttributesProxyMixin, object):
 
         self._copy_edges(other, id_map)
 
-    def _copy_edges(self, other, depth, id_map):
+    def _copy_edges(self, other, id_map):
         depth = len(self._parent.path) if self._parent else 0
 
         def node_from_path(parent_graph, id_map, path):
