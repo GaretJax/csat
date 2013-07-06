@@ -58,6 +58,14 @@ def install():
 
 
 @task
+def update():
+    stop()
+    with cd(env.app['dir']):
+        with prefix('source bin/activate'):
+            run('pip install -U {package}'.format(**env.app))
+
+
+@task
 def uninstall():
     stop()
     sudo('userdel {user}'.format(**env.app))
