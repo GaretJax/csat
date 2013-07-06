@@ -2,6 +2,7 @@ import os
 import contextlib
 import subprocess
 import signal
+import pipes
 
 from fabric.api import env, sudo, cd, settings, prefix, task, local, hide
 
@@ -209,16 +210,25 @@ def release():
     if not is_working_tree_clean():
         print 'Your working tree is not clean. Refusing to create a release.'
         return
-    else:
-        print 'Working tree is clean, proceding...'
+    return
 
     print 'Rebuilding assets to ensure everything is up to date...'
     assets()
+
+    if not is_working_tree_clean():
+        print 'Your working tree is not clean after the assets where rebuilt.'
+        print 'Please commit the changes before continuing.'
+        return
     return
 
-    # Bump version
+    # Check version
+    version = local('python setup.py --version', capture=True)
 
     # Tag
+    tag_message = 'CSAT release version {}.'.format(version)
+
+    local('git tag -a {} -m {}'.format(pipes.quote(version),
+                                       pipes.quote(tag_message)))
 
     # Push
     local('git push origin master')

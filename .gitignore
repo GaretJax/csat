@@ -6,4 +6,3 @@ dropin.cache
 .webassets-cache
 Gemfile.lock
 /temp
-fabfile.py
