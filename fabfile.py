@@ -107,3 +107,9 @@ def assets(clean=False):
         local('rm -rf {}'.format(static))
     local_django('collectstatic', '--noinput')
     local_django('assets', 'build')
+
+
+@task
+def lint():
+    local('flake8 --statistics --exit-zero --max-complexity=10 --benchmark '
+          '--exclude=\'*/migrations/*\' csat')
