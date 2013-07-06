@@ -5,17 +5,16 @@ from csat.django.apps.base import bundles
 three_js = bundles.make_js_bundle('three', [
     'js/three.js',
     'js/stats.js',
-    'js/OrbitControls.js',
-])
+], filters=['jsmin'])
 
 master = bundles.make_js_bundle('visualization', [
     bundles.coffee('viewer.old'),
     bundles.coffee('visualization'),
-], filters=['coffeescript'])
+], filters=['coffeescript', 'jsmin'])
 
 fonts = bundles.make_js_bundle('fonts', [
     'js/helvetiker.typeface.js',
-])
+], filters=['jsmin'])
 
 master = bundles.make_js_bundle('viewer', [
     bundles.coffee('lib'),
@@ -29,12 +28,8 @@ master = bundles.make_js_bundle('viewer', [
     bundles.coffee('graph'),
     bundles.coffee('strategies'),
     bundles.coffee('viewer'),
-], filters=['coffeescript'])
+], filters=['coffeescript', 'jsmin'])
 
-
-seedrandom = bundles.make_js_bundle('seedrandom', [
-    'js/seedrandom.js',
-])
 
 # Web worker layouts
 basedir = os.path.join(
@@ -73,6 +68,7 @@ for path in os.listdir(basedir):
     )
     bundles.make_js_bundle('worker_{}'.format(name),
         [jsbase, impl],
+        filters=['jsmin'],
         output='scripts/workers/{}{}.js'.format(name, bundles.postfix),
     )
 

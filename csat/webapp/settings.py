@@ -117,7 +117,6 @@ COMPASS_PLUGINS = (
 )
 
 COMPASS_CONFIG = {
-    'output_style': ':expanded',
     'additional_import_paths': [
         os.path.join(
             os.path.realpath(os.path.dirname(base.__file__)),
