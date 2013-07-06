@@ -49,8 +49,8 @@ class StopAction(argparse.Action):
 
         pid = self.getpid()
         if not self.term(pid, self.timeout):
-            self.writeln('Process did not exit after {} seconds, killing!'.format(
-                self.timeout))
+            self.writeln('Process did not exit after {} seconds, killing!'
+                         .format(self.timeout))
             self.kill(pid)
             try:
                 os.remove(self.pidfile)
@@ -84,7 +84,8 @@ class StopAction(argparse.Action):
             else:
                 raise
         else:
-            self.write('TERM signal sent to PID {}, waiting for process to exit...'.format(pid))
+            self.write('TERM signal sent to PID {}, waiting for process to '
+                       'exit...'.format(pid))
             while timeout > 0:
                 time.sleep(self.interval)
                 try:
@@ -99,7 +100,6 @@ class StopAction(argparse.Action):
                 self.writeln('')
                 return False
 
-
     def getpid(self):
         try:
             try:
@@ -107,10 +107,12 @@ class StopAction(argparse.Action):
                     return int(fh.read().strip())
             except IOError as e:
                 if e.errno == 2:
-                    self.writeln('PID file ({}) not found.'.format(self.pidfile))
+                    self.writeln('PID file ({}) not found.'
+                                 .format(self.pidfile))
                 else:
                     raise
         except:
-            self.writeln('Could not read server PID from {}.'.format(self.pidfile))
+            self.writeln('Could not read server PID from {}.'
+                         .format(self.pidfile))
 
         sys.exit(1)

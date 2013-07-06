@@ -68,12 +68,14 @@ urlpatterns = patterns(
     ),
 
     url(
-        r'^(?P<session_pk>\d+)/(?P<collector_pk>\d+)/log.(?P<format>txt|html)?$',
+        (r'^(?P<session_pk>\d+)/(?P<collector_pk>\d+)/log.'
+         '(?P<format>txt|html)?$'),
         'collector_view_log',
         name='collector-view-log'
     ),
     url(
-        r'^(?P<session_pk>\d+)/(?P<collector_pk>\d+)/graph.(?P<format>graphml|html)?$',
+        (r'^(?P<session_pk>\d+)/(?P<collector_pk>\d+)/graph.'
+         '(?P<format>graphml|html)?$'),
         'collector_view_results',
         name='collector-view-results'
     ),

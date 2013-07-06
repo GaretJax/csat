@@ -125,9 +125,6 @@ class DependencyGraph(object):
     def module(self, module):
         return self.components.nodes[self.modules[module][0]]
 
-    #def author(self, commit):
-
-
     def dependency(self, source, target):
         try:
             key = self.module(source), self.module(target)
@@ -167,6 +164,10 @@ class DependencyGraph(object):
             'author_added': self.email_from_commit(commit),
         })
 
+    def add_dependencies(self, commit, source, targets):
+        for target in targets:
+            self.add_dependency(commit, source, target)
+
     def remove_dependency(self, commit, source, target):
         self.get_dependencies(source).remove(target)
         if self.keep_history:
@@ -176,6 +177,10 @@ class DependencyGraph(object):
                 edge['author_removed'] = self.email_from_commit(commit)
         else:
             self.dependency(source, target).clear()
+
+    def remove_dependencies(self, commit, source, targets):
+        for target in targets:
+            self.remove_dependency(commit, source, target)
 
     def write_graphml(self, stream):
         return self.graph.normalized().to_file(stream)
@@ -193,7 +198,8 @@ class GitPythonCollector(object):
         self.rev = rev
         self.package_path = package.strip('/')
         try:
-            self.base_path, self.package_name = self.package_path.rsplit('/', 1)
+            self.base_path, self.package_name = self.package_path.rsplit('/',
+                                                                         1)
         except ValueError:
             self.base_path, self.package_name = '', self.package_path
         self.graph = DependencyGraph(keep_history=keep_history)
@@ -355,12 +361,13 @@ class GitPythonCollector(object):
             location = '{}:{}:{}'.format(e.filename, e.lineno, e.offset)
             code = '>>> ' + e.text + ' ' * (e.offset + 3) + '^'
             error = '{}\n{}'.format(location, code)
-            self.log.error('Could not parse module {!r} in commit {} ({})\n{}'.format(
-                module.get_import_path(), commit.hexsha[:6], e.msg, error))
+            self.log.error('Could not parse module {!r} in commit {} ({})\n{}'
+                           .format(module.get_import_path(), commit.hexsha[:6],
+                                   e.msg, error))
         except ValueError as e:
-            self.log.error('Could not parse module {!r} in commit {} ({})'.format(
-                module.get_import_path(), commit.hexsha[:6], e))
-
+            self.log.error('Could not parse module {!r} in commit {} ({})'
+                           .format(module.get_import_path(), commit.hexsha[:6],
+                                   e))
 
         return depends_on
 
@@ -380,12 +387,9 @@ class GitPythonCollector(object):
         self.handle_commit(commit, create_iter(walker.walk()))
 
     def handle_commit(self, commit, paths):
-        changed = False
-
         package_dir = os.path.join(self.repo.working_dir, self.base_path)
 
         for path, deleted in paths:
-            changed = True
             module = parser.Module(path, package_dir)
 
             if deleted:
@@ -409,15 +413,12 @@ class GitPythonCollector(object):
             if deleted:
                 self.log.debug('Deleted {!r}'.format(module))
 
-            for dep in removed:
-                self.graph.remove_dependency(commit, module, dep)
-
-            for dep in added:
-                self.graph.add_dependency(commit, module, dep)
+            self.graph.remove_dependencies(commit, module, removed)
+            self.graph.add_dependencies(commit, module, added)
 
             if deleted:
                 self.graph.remove_module(commit, module)
 
-        if not changed:
+        if not paths:
             self.log.debug('No source files modified, skipping commit {}'
                            .format(commit.hexsha[:6]))

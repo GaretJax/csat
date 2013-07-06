@@ -212,11 +212,13 @@ class ProgressProducerWrapper(object):
     def startProducing(self, consumer):
         consumer = ProgressConsumerWrapper(consumer, self.task)
         d = self.producer.startProducing(consumer)
+
         def uploadDone(r):
             self.task.setIndefinite()
             self.task.statusText = 'Waiting for server response...'
             return r
         d.addCallback(uploadDone)
+
         return d
 
     def pauseProducing(self):

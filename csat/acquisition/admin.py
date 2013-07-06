@@ -7,7 +7,8 @@ from csat.acquisition import get_collectors, models
 
 
 class AcquisitionSessionConfigAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'started', 'completed', 'temporary', 'status')
+    list_display = ('id', 'name', 'started', 'completed', 'temporary',
+                    'status')
 admin.site.register(models.AcquisitionSessionConfig,
                     AcquisitionSessionConfigAdmin)
 

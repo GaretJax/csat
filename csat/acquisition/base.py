@@ -47,7 +47,6 @@ class ConfiguratorBase(object):
         model.set_running()
 
 
-
 @implementer(ICollectorFactory, IPlugin)
 class FactoryBase(object):
     """

@@ -23,7 +23,9 @@ class Import(namedtuple('Import', ['module', 'name', 'alias', 'node'])):
             paths.append(os.path.join(*(self.module + [self.name + '.py'])))
 
         paths.append(os.path.join(*(self.module + ['__init__.py'])))
-        paths.append(os.path.join(*(self.module[:-1] + [self.module[-1] + '.py'])))
+
+        path_chunks = self.module[:-1] + [self.module[-1] + '.py']
+        paths.append(os.path.join(*path_chunks))
 
         return paths
 

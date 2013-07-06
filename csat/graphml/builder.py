@@ -111,7 +111,6 @@ class Node(_AttributesProxyMixin, object):
         return id_map
 
 
-
 class Edge(_AttributesProxyMixin, object):
     def __init__(self, graph, source_node, target_node, attributes=None,
                  id=None, directed=None):
@@ -129,7 +128,8 @@ class Edge(_AttributesProxyMixin, object):
         return 'e' + str(self._id) if self._id is not None else None
 
     def __repr__(self):
-        return 'Edge({} {} {})'.format(self.source.id, '>' if self.directed else '-', self.target.id)
+        symbol = '>' if self.directed else '-'
+        return 'Edge({} {} {})'.format(self.source.id, symbol, self.target.id)
 
     @property
     def directed(self):
@@ -201,10 +201,6 @@ class Edge(_AttributesProxyMixin, object):
                 edge.append(attr.bind(self[k]).to_xml(document, factory))
 
         return edge
-
-
-#class Hyperedge(object):
-#    pass
 
 
 class Attribute(object):
@@ -341,8 +337,6 @@ class GraphMLFactory(object):
     __call__ = element
 
 
-
-
 class Graph(_AttributesProxyMixin, object):
     """
     Generic class to build graph-like data structures with extended support for
@@ -372,7 +366,8 @@ class Graph(_AttributesProxyMixin, object):
         ns = {'namespaces': graphml.xpath_nsmap}
 
         direction = element.get('edgedefault')
-        direction = Graph.UNDIRECTED if direction == 'undirected' else Graph.DIRECTED
+        direction = (Graph.UNDIRECTED if direction == 'undirected'
+                     else Graph.DIRECTED)
         id = element.get('id', None)
         if not parent:
             id = int(id[1:]) if id else get_unique_id(document._graphs)
@@ -474,7 +469,7 @@ class Graph(_AttributesProxyMixin, object):
             pass
 
     def edge(self, source_node, target_node, attributes=None, id=None,
-                 directed=None):
+             directed=None):
         """
         Adds a new edge between the C{source_node} and C{target_node}. As this
         class implements multigraph support, a new edge is added even if one
@@ -546,7 +541,6 @@ class Graph(_AttributesProxyMixin, object):
         except KeyError:
             key = None
 
-        depth = len(self._parent.path) if self._parent else 0
         # Copy attributes
         self._attributes.update(other._attributes)
 
@@ -577,6 +571,11 @@ class Graph(_AttributesProxyMixin, object):
                 submap = thisnode.merge(othernode)
                 id_map[othernode._id] = thisnode._id, submap
 
+        self._copy_edges(other, id_map)
+
+    def _copy_edges(self, other, depth, id_map):
+        depth = len(self._parent.path) if self._parent else 0
+
         def node_from_path(parent_graph, id_map, path):
             path = list(path)
             parent_graph = self
@@ -592,8 +591,6 @@ class Graph(_AttributesProxyMixin, object):
             new_node = parent_graph._nodes[new_node_id]
             return new_node
 
-
-        # Copy all edges by updating IDs
         for edge in itertools.chain.from_iterable(other._edges.itervalues()):
             try:
                 srcpath = edge.source.path
@@ -608,10 +605,8 @@ class Graph(_AttributesProxyMixin, object):
                           edge._directed)
             except KeyError:
                 raise
-                #print edge.source.path, edge.target.path
 
         return id_map
-
 
 
 def get_unique_id(collection, id=None):

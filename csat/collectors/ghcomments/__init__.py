@@ -21,8 +21,8 @@ class GithubCommentsCollector(base.CollectorBase):
 
         auth = parser.add_mutually_exclusive_group()
         auth.add_argument('-t', '--token', help='A personal API access token.')
-        auth.add_argument('-a', '--client', help='The client ID and the client '
-                          'secret. Format: <id>:<secret>')
+        auth.add_argument('-a', '--client', help='The client ID and the client'
+                          ' secret. Format: <id>:<secret>')
 
         parser.add_argument('repo_name')
         return parser

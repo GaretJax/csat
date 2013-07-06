@@ -61,12 +61,12 @@ class LevelColoringFormatter(logging.Formatter):
         l = l.replace(record.levelname, self.hilite(record.levelname.lower(),
                                                     color=color), 1)
 
-        #return '\n'.join((l + r for r in r))
+        s = l + r[0]
         if r:
             if len(r) == 1:
-                return l + r[0]
+                return s
             else:
-                return l + r[0] + '\n' + '\n'.join((' ' * ll + r for r in r[1:]))
+                return s + '\n' + '\n'.join((' ' * ll + r for r in r[1:]))
 
 
 class StdioOnnaStick(object):

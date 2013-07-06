@@ -66,7 +66,8 @@ for path in os.listdir(basedir):
         filters=['coffeescript'],
         register=False
     )
-    bundles.make_js_bundle('worker_{}'.format(name),
+    bundles.make_js_bundle(
+        'worker_{}'.format(name),
         [jsbase, impl],
         filters=['jsmin'],
         output='scripts/workers/{}{}.js'.format(name, bundles.postfix),

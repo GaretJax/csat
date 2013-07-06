@@ -31,7 +31,6 @@ LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = [
     ('en', 'English'),
-#    ('fr', 'French'),
 ]
 
 SITE_ID = 1
@@ -100,12 +99,11 @@ TEMPLATE_LOADERS = (
 JINJA2_TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
 )
 
 JINJA2_DISABLED_TEMPLATES = (
     r'(admin|admin_doc|debug_toolbar)/',
-#    r'([^/]+.html)',
+    #r'([^/]+.html)',
     r'(bootstrap)/'
 )
 
@@ -167,9 +165,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 WSGI_APPLICATION = 'djgraph.wsgi.application'
 
 TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
 )
 
 INSTALLED_APPS = (
@@ -203,7 +198,8 @@ LOGGING = {
     'filters': {},
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s',
+            'format': ('%(levelname)s %(asctime)s %(module)s %(process)d '
+                       '%(thread)d %(message)s'),
         },
         'simple': {
             'format': '%(levelname)s %(message)s',

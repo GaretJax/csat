@@ -8,7 +8,8 @@ from django.views.generic import edit, list, base, detail
 from django.shortcuts import get_object_or_404
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.utils.translation import ugettext_lazy as _
-from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponseBadRequest
 from django.utils.timezone import now
 from django.core.servers.basehttp import FileWrapper
 from django.views.decorators.csrf import csrf_exempt
@@ -31,7 +32,6 @@ class SessionsIndex(list.ListView):
         return self.model.objects.filter(temporary=False)
 
 session_index = SessionsIndex.as_view()
-
 
 
 def run_acquisition_session(request, session):
@@ -89,10 +89,12 @@ class SessionReset(detail.SingleObjectMixin, base.View):
         self.object.thumbnail_background = None
         if self.object.thumbnail:
             self.object.thumbnail.delete(save=False)
-        path = os.path.join(os.path.dirname(__file__), 'static', 'images', 'no-thumb.png')
+        path = os.path.join(os.path.dirname(__file__), 'static', 'images',
+                            'no-thumb.png')
         with open(path) as fh:
             self.object.thumbnail.save('thumb', File(fh))
-        self.object.thumbnail_background = self.object.get_thumbnail_background()
+        bg_color = self.object.get_thumbnail_background()
+        self.object.thumbnail_background = bg_color
         if self.object.graph:
             self.object.graph.delete(save=False)
         for collector in self.object.collectors.all():
@@ -156,7 +158,7 @@ class SessionEditor(edit.UpdateView):
         #import time, random
         #time.sleep(random.random() * 5)
         context = super(SessionEditor, self).get_context_data(**kwargs)
-        context['create'] = self.object.temporary == True
+        context['create'] = bool(self.object.temporary)
         context['collectors_types'] = acquisition.get_collectors()
         return context
 
@@ -182,7 +184,8 @@ class SessionCreator(base.RedirectView):
     def get_redirect_url(self):
         session = models.AcquisitionSessionConfig.objects.create(
             temporary=True)
-        path = os.path.join(os.path.dirname(__file__), 'static', 'images', 'no-thumb.png')
+        path = os.path.join(os.path.dirname(__file__), 'static', 'images',
+                            'no-thumb.png')
         with open(path) as fh:
             session.thumbnail.save('thumb', File(fh))
         session.thumbnail_background = session.get_thumbnail_background()
@@ -522,8 +525,9 @@ class SessionViewResults(FileViewer):
             self.object = models.AcquisitionSessionConfig.objects.get(
                 pk=int(self.kwargs['session_pk']))
         except models.DataCollectorConfig.DoesNotExist:
+            name = models.AcquisitionSessionConfig._meta.verbose_name
             raise Http404(_("No %(verbose_name)s found matching the query") %
-                          {'verbose_name': models.AcquisitionSessionConfig._meta.verbose_name})
+                          {'verbose_name': name})
         return self.object.graph
 
 session_view_results = SessionViewResults.as_view(raw_format='graphml')
@@ -535,7 +539,8 @@ class SessionThumbnail(detail.SingleObjectMixin, base.View):
     def get(self, request, *args, **kwargs):
         session = self.get_object()
         if not session.thumbnail:
-            path = os.path.join(os.path.dirname(__file__), 'static', 'images', 'no-thumb.png')
+            path = os.path.join(os.path.dirname(__file__), 'static', 'images',
+                                'no-thumb.png')
             with open(path) as fh:
                 image = fh.read()
         else:
@@ -547,7 +552,8 @@ class SessionThumbnail(detail.SingleObjectMixin, base.View):
         session = self.get_object()
         if session.thumbnail:
             session.thumbnail.delete(save=False)
-        form = forms.ThumbnailForm(request.POST, request.FILES, instance=session)
+        form = forms.ThumbnailForm(request.POST, request.FILES,
+                                   instance=session)
         if form.is_valid():
             session = form.save(commit=False)
             session.thumbnail_background = session.get_thumbnail_background()

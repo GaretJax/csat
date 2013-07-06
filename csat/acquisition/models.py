@@ -162,8 +162,8 @@ class DataCollectorConfig(PolymorphicModel):
         return '{}/{}-{}.graphml'.format(self.session_config.pk, self.pk,
                                          self.configurator)
     graph = models.FileField(upload_to=get_graph_upload_path, storage=graph_fs,
-                         blank=True,
-                         null=True)
+                             blank=True,
+                             null=True)
     #schema=graphml.get_schema_path(),
 
     def get_log_upload_path(self, filename):

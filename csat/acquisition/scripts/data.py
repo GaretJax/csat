@@ -9,9 +9,9 @@ def merge():
     parser.add_argument('file1', metavar='file', nargs=1)
     parser.add_argument('files', metavar='file', nargs='+')
     parser.add_argument('-o', '--output', default='-', help='Path to the '
-                            'resulting GraphML file. A single - makes the '
-                            'graph to be written to stdout. The default is to'
-                            ' write the graph to stdout.')
+                        'resulting GraphML file. A single - makes the '
+                        'graph to be written to stdout. The default is to '
+                        'write the graph to stdout.')
     args = parser.parse_args()
 
     d = merge_files(args.file1 + args.files)

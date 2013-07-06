@@ -129,46 +129,47 @@ class PipermailCollector(object):
         self.publishTask.statusText = 'Building graph...'
         self.publishTask.steps = len(senders) + len(threads)
 
-        def publishSenders(senders):
-            senders_map = {}
+        yield task.coiterate(self.publishSenders(threads, senders))
 
-            self.publishTask.statusText = 'Publishing nodes info...'
-            for sender, mails in senders.iteritems():
-                sender_id = len(senders_map)
-                senders_map[sender] = self.subgraph.node(sender_id, {
-                    'type': 'person',
-                    'email': sender,
-                    'mails_sent': len(mails)
-                })
-                self.publishTask.makeStep()
-                yield None
+    def publishSenders(self, threads, senders):
+        senders_map = {}
 
-            self.publishTask.statusText = 'Defining edge weights...'
-            interactions = Counter()
-            for subject, mails in threads.iteritems():
-                def key(m):
-                    return m['headers']['date']
-                mails = sorted(mails, key=key)
-                sorted_posters = (m['headers']['from'] for m in mails[1:])
-                op = mails[0]['headers']['from']
-                replies = ((p, op) for p in sorted_posters if p != op)
-                for reply in replies:
-                    interactions[reply] += 1
-                self.publishTask.makeStep()
-                yield None
+        self.publishTask.statusText = 'Publishing nodes info...'
+        for sender, mails in senders.iteritems():
+            sender_id = len(senders_map)
+            senders_map[sender] = self.subgraph.node(sender_id, {
+                'type': 'person',
+                'email': sender,
+                'mails_sent': len(mails)
+            })
+            self.publishTask.makeStep()
+            yield None
 
-            self.publishTask.statusText = 'Publishing edges info...'
-            self.publishTask.steps += len(interactions)
-            for (src, dst), count in interactions.iteritems():
-                src, dst = senders_map[src], senders_map[dst]
-                self.subgraph.edge(src, dst, {
-                    'type': 'interaction',
-                    'count': count,
-                })
-                yield None
+        self.publishTask.statusText = 'Defining edge weights...'
+        interactions = Counter()
+        for subject, mails in threads.iteritems():
+            def key(m):
+                return m['headers']['date']
+            mails = sorted(mails, key=key)
+            sorted_posters = (m['headers']['from'] for m in mails[1:])
+            op = mails[0]['headers']['from']
+            replies = ((p, op) for p in sorted_posters if p != op)
+            for reply in replies:
+                interactions[reply] += 1
+            self.publishTask.makeStep()
+            yield None
 
-            self.publishTask.setCompleted()
-        yield task.coiterate(publishSenders(senders))
+        self.publishTask.statusText = 'Publishing edges info...'
+        self.publishTask.steps += len(interactions)
+        for (src, dst), count in interactions.iteritems():
+            src, dst = senders_map[src], senders_map[dst]
+            self.subgraph.edge(src, dst, {
+                'type': 'interaction',
+                'count': count,
+            })
+            yield None
+
+        self.publishTask.setCompleted()
 
     def getPage(self, url):
         url = str(url)

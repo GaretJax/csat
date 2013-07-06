@@ -4,7 +4,6 @@ import hashlib
 from csat.graphml.builder import GraphMLDocument, Attribute
 
 
-
 class IssuesGraph(object):
 
     def __init__(self):
@@ -26,7 +25,6 @@ class IssuesGraph(object):
         self.document.attr(Attribute.NODE, 'email')
         self.document.attr(Attribute.NODE, 'login')
         self.document.attr(Attribute.NODE, 'name')
-
 
         self.domains = self.document.digraph(None, {'merge_key': 'domain'})
 

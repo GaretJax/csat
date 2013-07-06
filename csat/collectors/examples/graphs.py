@@ -180,7 +180,6 @@ class GraphC(Graph):
             'key2': 'data3'
         })
 
-
         people_domain.edge(3, 4, {'nodes': 'b5,6'})
         return doc
 

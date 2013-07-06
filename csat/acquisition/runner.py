@@ -99,7 +99,6 @@ class RunnerBase(object):
                     task.statusText = ('Task failed to complete before process'
                                        ' termination.')
 
-
         # Shutdown logging
         self.logger.stop(res)
         return res

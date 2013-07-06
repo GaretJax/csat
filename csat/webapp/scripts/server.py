@@ -79,6 +79,7 @@ ACQUISITION_SERVER = {
 }
 """
 
+
 def init():
     parser = argparse.ArgumentParser('csat-init')
     parser.add_argument('envdir')
@@ -128,8 +129,8 @@ def init():
         sys.exit(1)
 
     print
-    print 'Environment successfully initialized. You can now start the web server'
-    print 'by issuing the following command:'
+    print 'Environment successfully initialized. You can now start the web'
+    print 'server by issuing the following command:'
     print
     print '    csat-webserver {}'.format(pipes.quote(envdir.path))
     print
