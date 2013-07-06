@@ -43,7 +43,7 @@ def local_django(*cmd, **kwargs):
     return local(' '.join(cmd))
 
 
-def clean_work_tree():
+def is_working_tree_clean():
     with settings(hide('everything'), warn_only=True):
         local('git update-index -q --ignore-submodules --refresh')
         unstaged = local('git diff-files --quiet --ignore-submodules --', capture=True)
@@ -206,11 +206,15 @@ def lint():
 
 @task
 def release():
-    print clean_work_tree()
-    return
-    # Check clean
+    if not is_working_tree_clean():
+        print 'Your working tree is not clean. Refusing to create a release.'
+        return
+    else:
+        print 'Working tree is clean, proceding...'
 
+    print 'Rebuilding assets to ensure everything is up to date...'
     assets()
+    return
 
     # Bump version
 
