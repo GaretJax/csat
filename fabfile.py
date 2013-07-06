@@ -3,7 +3,7 @@ import contextlib
 import subprocess
 import signal
 
-from fabric.api import env, sudo, cd, settings, prefix, task, local
+from fabric.api import env, sudo, cd, settings, prefix, task, local, hide
 
 
 env.app = {
@@ -41,6 +41,14 @@ def local_django(*cmd, **kwargs):
     ]
     cmd = environ + ['django-admin.py'] + list(cmd) + args
     return local(' '.join(cmd))
+
+
+def clean_work_tree():
+    with settings(hide('everything'), warn_only=True):
+        local('git update-index -q --ignore-submodules --refresh')
+        unstaged = local('git diff-files --quiet --ignore-submodules --', capture=True)
+        uncommitted = local('git diff-index --cached --quiet HEAD --ignore-submodules --', capture=True)
+    return unstaged.succeeded and uncommitted.succeeded
 
 
 @task
@@ -194,3 +202,24 @@ def lint():
     """
     local('flake8 --statistics --exit-zero --max-complexity=10 --benchmark '
           '--exclude=\'*/migrations/*\' csat')
+
+
+@task
+def release():
+    print clean_work_tree()
+    return
+    # Check clean
+
+    assets()
+
+    # Bump version
+
+    # Tag
+
+    # Push
+    local('git push origin master')
+
+    # Package and upload to pypi
+    local('python setup.py sdist upload')
+
+    # Upload to github
