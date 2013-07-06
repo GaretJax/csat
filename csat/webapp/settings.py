@@ -5,7 +5,7 @@ import os
 from csat.django.apps import base
 from csat import acquisition
 
-DEBUG = False
+DEBUG = os.environ.get('CSAT_DEBUG', '').lower() in ('true', 'yes', 'y', '1')
 _ = gettext = lambda s: s
 
 # Absolute path to the directory containing the Django project
@@ -66,7 +66,10 @@ MEDIA_URL = '/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = os.path.join(WEBAPP_BASE, 'static')
+if DEBUG:
+    STATIC_ROOT = os.path.join(ENV_BASE, 'static')
+else:
+    STATIC_ROOT = os.path.join(WEBAPP_BASE, 'static')
 
 GRAPHS_ROOT = os.path.join(ENV_BASE, 'graphs')
 
@@ -95,6 +98,8 @@ STATICFILES_FINDERS = (
 TEMPLATE_LOADERS = (
     'coffin.template.loaders.Loader',
 )
+
+TEMPLATE_DEBUG = DEBUG
 
 JINJA2_TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
@@ -126,9 +131,9 @@ COMPASS_CONFIG = {
 
 ASSETS_DEBUG = False
 
-ASSETS_AUTO_BUILD = False
+ASSETS_AUTO_BUILD = DEBUG
 
-ASSETS_URL_EXPIRE = False
+ASSETS_URL_EXPIRE = DEBUG
 
 ASSETS_VERSIONS = False
 
@@ -162,7 +167,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'djgraph.wsgi.application'
+WSGI_APPLICATION = 'csat.webapp.wsgi.application'
 
 TEMPLATE_DIRS = (
 )
