@@ -76,8 +76,8 @@ def uninstall():
 @task
 def start():
     with appenv():
-        run('authbind csat-webserver -n . tcp:{port}'.format(**env.app))
-        #run('csat-acquisition-server')
+        run('authbind csat-webserver . tcp:{port}'.format(**env.app))
+        run('csat-acquisition-server -p tcp:1500')
 
 
 @task
