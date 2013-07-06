@@ -208,6 +208,10 @@ def lint():
 
 @task
 def release():
+    """
+    Create a new release and upload it to PyPI.
+    """
+
     if not is_working_tree_clean():
         print 'Your working tree is not clean. Refusing to create a release.'
         return
