@@ -66,6 +66,8 @@ SECRET_KEY = '%s'
 #    '<secret>'
 #]
 
+#ALLOWED_HOSTS = []
+
 ACQUISITION_SERVER = {
     'public': {
         'port': 7002,
