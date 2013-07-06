@@ -9,11 +9,11 @@ DEBUG = False
 _ = gettext = lambda s: s
 
 # Absolute path to the directory containing the Django project
-WEBAPP_BASE = os.path.dirname(__file__)
+WEBAPP_BASE = os.path.realpath(os.path.dirname(__file__))
 
 # Absolute path to the directory containing the wsgi application
 # infrastructure (nginx config, unix sockets, project code,...)
-ENV_BASE = os.environ['CSAT_ENVDIR']
+ENV_BASE = os.path.realpath(os.environ['CSAT_ENVDIR'])
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -119,9 +119,19 @@ COMPASS_PLUGINS = (
 COMPASS_CONFIG = {
     'output_style': ':expanded',
     'additional_import_paths': [
-        os.path.join(os.path.dirname(base.__file__), 'assets', 'sass_shared'),
+        os.path.join(
+            os.path.realpath(os.path.dirname(base.__file__)),
+            'assets',
+            'sass_shared'
+        ),
     ]
 }
+
+ASSETS_DEBUG = False
+
+ASSETS_AUTO_BUILD = False
+
+ASSETS_VERSIONS = False
 
 APPEND_SLASH = True
 

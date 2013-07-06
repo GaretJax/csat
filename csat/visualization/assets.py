@@ -47,7 +47,7 @@ coffeebase = bundles.make_js_bundle(
     [
         bundles.coffee('lib'),
         bundles.coffee('iterator'),
-        os.path.join(basedir, 'base.coffee'),
+        bundles.coffee('workers/base'),
     ],
     register=False,
     filters=['coffeescript'],
