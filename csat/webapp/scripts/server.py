@@ -68,7 +68,6 @@ SECRET_KEY = '%s'
 
 ACQUISITION_SERVER = {
     'public': {
-        'host': '0.0.0.0',
         'port': 7002,
     },
     'private': {

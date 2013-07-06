@@ -456,7 +456,19 @@ $ ->
         $('.session-list a').click((e) -> e.stopPropagation())
 
     if $('.collector-monitor').size()
-        ws = $.websocket("ws://#{acquisitionServer}/", {
+        host = acquisitionServer['host']
+        port = acquisitionServer['port']
+
+        if not host
+            host = window.location.hostname
+
+            if not port
+                port = window.location.port
+
+        if port
+            host = "#{host}:#{port}"
+
+        ws = $.websocket("ws://#{host}/", {
             open: (->
                 $('.collector-monitor').each(->
                     loadTasks.call(this, ws)

@@ -1,6 +1,7 @@
 from StringIO import StringIO
 import logging
 import os
+import json
 
 from django.core.files.base import File, ContentFile
 from django.views.generic import edit, list, base, detail
@@ -124,9 +125,8 @@ class SessionDetails(detail.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(SessionDetails, self).get_context_data(**kwargs)
-        context['acquisition_server'] = '{host}:{port}'.format(
-            **settings.ACQUISITION_SERVER['public']
-        )
+        context['acquisition_server'] = json.dumps(
+            settings.ACQUISITION_SERVER['public'])
         return context
 
 session_view = SessionDetails.as_view()

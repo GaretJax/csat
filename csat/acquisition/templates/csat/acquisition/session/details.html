@@ -5,7 +5,7 @@
 {% block extrahead %}
 	{{ super() }}
 	<script type="text/javascript">
-		var acquisitionServer = "{{ acquisition_server }}"
+		var acquisitionServer = {{ acquisition_server|safe }}
 	</script>
 {% endblock %}
 
