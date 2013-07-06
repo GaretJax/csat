@@ -29,21 +29,22 @@ def appenv():
     )
 
 
-def local_django(*cmd):
-    args = (
+def local_django(*cmd, **kwargs):
+    environ = ['CSAT_{}={}'.format(k.upper(), v) for k, v in kwargs.iteritems()]
+    environ += ['CSAT_ENVDIR={}'.format(env.local_envdir)]
+    args = [
         '--pythonpath=.',
         '--settings=csat.webapp.settings',
-    )
-    cmd = (('CSAT_ENVDIR={}'.format(env.local_envdir ), 'django-admin.py', )
-           + cmd + args)
+    ]
+    cmd = environ + ['django-admin.py'] + list(cmd) + args
     return local(' '.join(cmd))
 
 
 @task
 def install():
     with settings(warn_only=True):
-        sudo('useradd --home-dir {dir} --system --shell /bin/false --create-home '
-             '{user}'.format(**env.app))
+        sudo('useradd --home-dir {dir} --system --shell /bin/false '
+             '--create-home {user}'.format(**env.app))
 
     sudo('apt-get install python-virtualenv libxml2-dev libxslt-dev authbind')
     sudo('touch /etc/authbind/byport/{port}'.format(**env.app))
