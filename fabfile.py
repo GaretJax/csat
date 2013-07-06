@@ -89,6 +89,17 @@ def stop():
 
 
 @task
+def restart():
+    stop()
+    start()
+
+
+@task
+def weblog():
+    run('tail -f {dir}/{envdir}/webserver.log'.format(**env.app))
+
+
+@task
 def assets(clean=False):
     if clean:
         from csat import webapp
