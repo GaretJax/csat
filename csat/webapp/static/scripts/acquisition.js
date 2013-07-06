@@ -15,4 +15,4 @@ color=[bg.substring(1,3),bg.substring(3,5),bg.substring(5)];color=(function(){va
 return _results;})();color1="rgba("+(color.join(','))+",0)";color2="rgba("+(color.join(','))+",0.8)";gradient="linear-gradient(to bottom, "+color1+" 0px, "+color2+" 30px)";return $('.front-panel > strong',this).css('background-image',gradient);});$('.session-list a').click(function(e){return e.stopPropagation();});}
 if($('.collector-monitor').size()){host=acquisitionServer['host'];port=acquisitionServer['port'];if(!host){host=window.location.hostname;if(!port){port=window.location.port;}}
 if(port){host=""+host+":"+port;}
-console.log(host);return ws=$.websocket("ws://"+host+"/",{open:(function(){return $('.collector-monitor').each(function(){return loadTasks.call(this,ws);});}),close:(function(){}),events:{}});}});
+return ws=$.websocket("ws://"+host+"/",{open:(function(){return $('.collector-monitor').each(function(){return loadTasks.call(this,ws);});}),close:(function(){}),events:{}});}});
