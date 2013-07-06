@@ -1,5 +1,7 @@
 import os
 import contextlib
+import subprocess
+
 from fabric.api import env, sudo, cd, settings, prefix, task, local
 
 
@@ -98,6 +100,29 @@ def restart():
 @task
 def weblog():
     run('tail -f {dir}/{envdir}/webserver.log'.format(**env.app))
+
+
+@task
+def rundev():
+    local_django('runserver', debug=True)
+
+
+@task
+def watch():
+    local_django('assets', 'watch', debug=True)
+
+
+@task
+def livereload():
+    process = subprocess.Popen([
+        'bundle', 'exec', 'guard',
+        '-w', env.local_envdir,
+        '-G', os.path.join(os.path.dirname(__file__), 'Guardfile'),
+    ])
+    try:
+        process.wait()
+    except KeyboardInterrupt:
+        process.terminate()
 
 
 @task
