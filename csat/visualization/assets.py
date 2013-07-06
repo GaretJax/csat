@@ -5,16 +5,16 @@ from csat.django.apps.base import bundles
 three_js = bundles.make_js_bundle('three', [
     'js/three.js',
     'js/stats.js',
-], filters=['jsmin'])
+], filters=bundles.jsfilters)
 
 master = bundles.make_js_bundle('visualization', [
     bundles.coffee('viewer.old'),
     bundles.coffee('visualization'),
-], filters=['coffeescript', 'jsmin'])
+], filters=['coffeescript'] + bundles.jsfilters)
 
 fonts = bundles.make_js_bundle('fonts', [
     'js/helvetiker.typeface.js',
-], filters=['jsmin'])
+], filters=bundles.jsfilters)
 
 master = bundles.make_js_bundle('viewer', [
     bundles.coffee('lib'),
@@ -28,7 +28,7 @@ master = bundles.make_js_bundle('viewer', [
     bundles.coffee('graph'),
     bundles.coffee('strategies'),
     bundles.coffee('viewer'),
-], filters=['coffeescript', 'jsmin'])
+], filters=['coffeescript'] + bundles.jsfilters)
 
 
 # Web worker layouts
@@ -69,7 +69,7 @@ for path in os.listdir(basedir):
     bundles.make_js_bundle(
         'worker_{}'.format(name),
         [jsbase, impl],
-        filters=['jsmin'],
+        filters=bundles.jsfilters,
         output='scripts/workers/{}{}.js'.format(name, bundles.postfix),
     )
 

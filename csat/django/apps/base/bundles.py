@@ -8,6 +8,12 @@ else:
     postfix = ''
 
 
+if settings.DEBUG:
+    jsfilters = []
+else:
+    jsfilters = ['jsmin']
+
+
 def make_bundle(name, files, **kwargs):
     register_flag = kwargs.pop('register', True)
     bundle = Bundle(*files, **kwargs)

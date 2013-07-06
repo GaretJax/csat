@@ -1,5 +1,5 @@
 from csat.django.apps.base.bundles import make_css_bundle, make_js_bundle
-from csat.django.apps.base.bundles import coffee
+from csat.django.apps.base.bundles import coffee, jsfilters
 
 from csat.django.apps.bootstrap import assets as bootstrap
 
@@ -40,4 +40,4 @@ external_libraries = make_js_bundle('base_libs', [
 
 all_js = make_js_bundle('master', [
     'coffeescripts/master.coffee',
-], filters=['coffeescript', 'jsmin'])
+], filters=['coffeescript'] + jsfilters)
