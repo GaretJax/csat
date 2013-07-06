@@ -81,6 +81,10 @@ def stop():
 
 
 @task
-def assets():
+def assets(clean=False):
+    if clean:
+        from csat import webapp
+        static = os.path.join(os.path.dirname(webapp.__file__), 'static')
+        local('rm -rf {}'.format(static))
     local_django('collectstatic', '--noinput')
     local_django('assets', 'build')
