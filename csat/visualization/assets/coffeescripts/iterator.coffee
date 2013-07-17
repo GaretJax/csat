@@ -1,5 +1,12 @@
-class StopIteration extends Error
+Object.defineProperty(String.prototype, 'endswith', {
+    value: (suffix) ->
+        @indexOf(suffix, @length - suffix.length) != -1
+    enumerable: false
+})
 
+
+
+class StopIteration extends Error
 
 Object.defineProperty(Object.prototype, 'iter', {
     value: (cb) ->
@@ -15,13 +22,6 @@ Object.defineProperty(Object.prototype, 'iter', {
                 else
                     throw e
         return
-    enumerable: false
-})
-
-
-Object.defineProperty(String.prototype, 'endswith', {
-    value: (suffix) ->
-        @indexOf(suffix, @length - suffix.length) != -1
     enumerable: false
 })
 
