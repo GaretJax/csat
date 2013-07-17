@@ -1280,17 +1280,6 @@ class Viewer
             )
 
 
-class ModalPanel
-    constructor: ->
-
-    open: =>
-
-    close: =>
-
-
-class VisualizationSettings extends ModalPanel
-
-
 (($) ->
     $ ->
         $('body').click((e) ->
@@ -1322,20 +1311,20 @@ class VisualizationSettings extends ModalPanel
                 new FRLayout3DFactory(),
                 new DomainFRLayout2DFactory()
             ]),
-            new DomainStrategy([
+            new DomainStrategy([     # Intra-domain layouts
                 new FRLayout2DAsyncFactory(),
                 new FRLayout2DFactory(),
                 new FRLayout3DFactory(),
-            ], [
+            ], [                     # Inter-domain layouts
                 new StackedLayoutFactory(),
                 new FRLayout2DFactory(),
                 new FRLayout3DFactory(),
             ]),
-            new ExtrudedStrategy([
+            new ExtrudedStrategy([   # Domain layouts
                 new StackedLayoutFactory(),
                 new FRLayout2DFactory(),
                 new FRLayout3DFactory(),
-            ], [
+            ], [                     # Nodes layouts
                 new DomainFRLayout2DFactory()
                 new FRLayout2DAsyncFactory(),
                 new FRLayout2DFactory(),
