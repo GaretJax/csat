@@ -1307,6 +1307,7 @@ class Viewer
             new SingleStrategy([
                 new RandomLayoutFactory(),
                 new FRLayout2DAsyncFactory(),
+                new FRLayout3DAsyncFactory(),
                 new FRLayout2DFactory(),
                 new FRLayout3DFactory(),
                 new DomainFRLayout2DFactory()

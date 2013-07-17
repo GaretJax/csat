@@ -434,6 +434,26 @@ class FRLayout2DFactory extends LayoutFactory
 
 
 
+class FRLayout3DAsync extends WorkerLayout
+    constructor: ->
+        super('fr3d')
+
+    setK: (k) ->
+        @sendMessage('setProperty', ['k', k])
+
+    setIterations: (iterations) ->
+        @sendMessage('setProperty', ['iterations', iterations])
+
+    setRadius: (@radius) ->
+        @sendMessage('setProperty', ['radius', radius])
+
+    setTemperature: (temp) ->
+        @sendMessage('setProperty', ['temperature', temp])
+
+    setScene: (@scene) ->
+
+
+
 class FRLayout2DAsync extends WorkerLayout
     constructor: ->
         super('fr2d')
@@ -690,7 +710,7 @@ class FRLayout3DFactory extends LayoutFactory
                 step: 0.01
                 setter: 'setTemperature'
             }
-            iter: {
+            iterations: {
                 label: 'Iterations'
                 type: 'integer'
                 min: 1
@@ -718,6 +738,15 @@ class FRLayout3DFactory extends LayoutFactory
             }
         }
 
+
+class FRLayout3DAsyncFactory extends FRLayout3DFactory
+    getName: -> 'Fruchterman-Reingold (3D, async)'
+    buildLayout: -> new FRLayout3DAsync()
+    getSettings: ->
+        settings = $.extend({}, super())
+        delete settings['visible']
+        delete settings['wireframe']
+        settings
 
 
 class RandomLayout extends Layout
