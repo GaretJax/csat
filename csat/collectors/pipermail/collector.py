@@ -6,6 +6,7 @@ from collections import Counter
 from cStringIO import StringIO
 
 from dateutil import parser as date_parser
+from dateutil.tz import tzutc
 
 from bs4 import BeautifulSoup
 
@@ -258,7 +259,7 @@ class PipermailCollector(object):
 
     def parseHeader_DATE(self, val):
         try:
-            return date_parser.parse(val)
+            date = date_parser.parse(val)
         except ValueError:
             # Try again using fuzzy parsing
             try:
@@ -266,10 +267,15 @@ class PipermailCollector(object):
                 self.log.info('Fuzzy parsing for date: \'{}\'\n'
                               '        Resulting date: \'{:%a, %d %b %Y '
                               '%H:%M:%S %z}\''.format(val, parsed))
-                return parsed
+                date = parsed
             except ValueError:
                 self.log.warning('Could not parse date: \'{}\''.format(val))
                 raise
+
+        if date.tzinfo is None:
+            date = date.replace(tzinfo=tzutc())
+
+        return date
 
     def parseHeader_REFERENCES(self, val):
         return val.split(' ')
