@@ -115,16 +115,19 @@ class PipermailCollector(object):
             if success:
                 first = True
                 for mail in mails:
-                    if first:
-                        date = mail['headers']['date']
-                        text = 'Parsing email data for {}...'.format(
-                            date.strftime('%Y-%m'))
-                        self.parseTask.statusText = text
-                        first = False
-                    sender_id = mail['headers']['from']
-                    subject_id = mail['headers']['subject']
-                    senders.setdefault(sender_id, []).append(mail)
-                    threads.setdefault(subject_id, []).append(mail)
+                    try:
+                        if first:
+                            date = mail['headers']['date']
+                            text = 'Parsing email data for {}...'.format(
+                                date.strftime('%Y-%m'))
+                            self.parseTask.statusText = text
+                            first = False
+                        sender_id = mail['headers']['from']
+                        subject_id = mail['headers']['subject']
+                        senders.setdefault(sender_id, []).append(mail)
+                        threads.setdefault(subject_id, []).append(mail)
+                    except Exception as e:
+                        self.log.error(e)
             self.parseTask.makeStep()
         self.parseTask.setCompleted()
 
