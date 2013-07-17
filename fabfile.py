@@ -35,7 +35,7 @@ def appenv():
 
 
 def local_django(*cmd, **kwargs):
-    environ = ['CSAT_{}={}'.format(k.upper(), v) for k, v in kwargs.iteritems()]
+    environ = ['CSAT_{}={}'.format(k.upper(), v) for k, v in kwargs.items()]
     environ += ['CSAT_ENVDIR={}'.format(env.local_envdir)]
     args = [
         '--pythonpath=.',
@@ -48,8 +48,10 @@ def local_django(*cmd, **kwargs):
 def is_working_tree_clean():
     with settings(hide('everything'), warn_only=True):
         local('git update-index -q --ignore-submodules --refresh')
-        unstaged = local('git diff-files --quiet --ignore-submodules --', capture=True)
-        uncommitted = local('git diff-index --cached --quiet HEAD --ignore-submodules --', capture=True)
+        unstaged = local('git diff-files --quiet --ignore-submodules --',
+                         capture=True)
+        uncommitted = local('git diff-index --cached --quiet HEAD '
+                            '--ignore-submodules --', capture=True)
     return unstaged.succeeded and uncommitted.succeeded
 
 
@@ -135,6 +137,11 @@ def weblog():
 
 
 @task
+def django(*cmd):
+    local_django(*cmd, debug=True)
+
+
+@task
 def dev():
     """
     Runs all development services.
@@ -203,7 +210,7 @@ def lint():
     Checks the source code using flake8.
     """
     local('flake8 --statistics --exit-zero --max-complexity=10 --benchmark '
-          '--exclude=\'*/migrations/*\' csat')
+          '--exclude=\'*/migrations/*,./dist,./build\' .')
 
 
 @task
