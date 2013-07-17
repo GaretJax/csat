@@ -22,10 +22,7 @@ class UploadCollector(base.ConfiguratorBase):
         pass
 
     def run(self, request, model, remote):
-        postback = model.create_postback_url(save=False)
-        postback = request.build_absolute_uri(postback)
-        model.save()
-        #model.set_running()
+        model.create_postback_url()
 
 
 upload_collector = UploadCollector()
