@@ -328,6 +328,13 @@ class DomainLabelsObject extends THREE.Mesh
                 ctx.textAlign = "center"
                 ctx.fillText(ch, (x + .5) * fontSize,  (yOffset + y + 1) * fontSize)
 
+        ###$('body').append(c)
+        $(c).css({
+            position: 'absolute'
+            top: 0
+            left: 0
+        })###
+
         texture = new THREE.Texture(c)
         texture.needsUpdate = true
         texture
