@@ -32,6 +32,7 @@ class PipermailCollector(object):
         self.tasks = task_manager
         self.log = logger
         self.url = base_url
+        self.mails_count = 0
         self.getPageQueue = defer.DeferredSemaphore(concurrency)
 
     def run(self):
@@ -49,6 +50,7 @@ class PipermailCollector(object):
         self.graph.write_graphml = self.graph.to_file
 
         def stop(_):
+            self.log.info('Parsed {} emails.'.format(self.mails_count))
             reactor.stop()
 
         def catchError(failure):
@@ -226,6 +228,7 @@ class PipermailCollector(object):
                 yield mail
 
     def parseMail(self, text):
+        self.mails_count += 1
         mail = text.strip().split('\n\n', 1)
 
         headers = mail[0]
