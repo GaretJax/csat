@@ -228,3 +228,79 @@ class Random(Graph):
             edge_graph.edge(from_node, to_node)
 
         return doc
+
+
+class Delaunay(Graph):
+    key = 'delaunay'
+    description = 'Delaunay'
+
+    nodes = 2000
+
+    def populate_graph(self, graph, numnodes):
+        nodes = []
+        points = []
+        edges = set()
+
+        for i in xrange(numnodes):
+            nodes.append(graph.node(i))
+            points.append([random.random(), random.random()])
+
+        import numpy as np
+        points = np.array(points)
+
+        from scipy.spatial import Delaunay
+
+        tri = Delaunay(points)
+
+        for n1, n2, n3 in tri.simplices:
+            face_edges = (n1, n2), (n2, n3), (n3, n1)
+
+            for edge in face_edges:
+                edge = tuple(sorted(edge))
+                if edge not in edges:
+                    edges.add(edge)
+                    graph.edge(nodes[edge[0]], nodes[edge[1]])
+
+
+    def build(self):
+        doc = builder.GraphMLDocument()
+        doc.attr('node', 'domain')
+
+        graph = doc.graph()
+        domain = graph.node(0, {'domain': 'domain-0'}).subgraph()
+        self.populate_graph(domain, self.nodes)
+
+        return doc
+
+
+class MultidomainDelaunay(Delaunay):
+    key = 'multidelaunay'
+    description = 'Multidomain Delaunay'
+
+    nodes = (15, 25, 35)
+    edges = 20
+
+    def build(self):
+        domains = []
+        doc = builder.GraphMLDocument()
+        doc.attr('node', 'domain')
+
+        graph = doc.graph()
+
+        for i, size in enumerate(self.nodes):
+            domain = graph.node(i, {'domain': 'domain-{}'.format(i)}).subgraph()
+            self.populate_graph(domain, size)
+            domains.append(domain)
+
+        for i in xrange(self.edges):
+            from_domain = to_domain = random.choice(domains)
+
+            while to_domain == from_domain:
+                to_domain = random.choice(domains)
+
+            from_node = random.choice(from_domain.nodes.values())
+            to_node = random.choice(to_domain.nodes.values())
+
+            graph.edge(from_node, to_node)
+
+        return doc
