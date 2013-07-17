@@ -213,7 +213,7 @@ class Attribute(object):
         'long': (lambda x: str(int(x)), lambda x: int(x.text)),
         'float': (lambda x: str(float(x)), lambda x: float(x.text)),
         'double': (lambda x: str(float(x)), lambda x: float(x.text)),
-        'string': (lambda x: unicode(x), lambda x: unicode(x.text)),
+        'string': (lambda x: unicode(x, 'utf8'), lambda x: unicode(x.text)),
     }
 
     def __init__(self, graph, id, domain, name, type, default=None,
