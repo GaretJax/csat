@@ -203,6 +203,17 @@ class Edge(_AttributesProxyMixin, object):
         return edge
 
 
+def safe_unicode(obj, *args):
+    if isinstance(obj, unicode):
+        return obj
+
+    try:
+        return unicode(obj, *args)
+    except UnicodeDecodeError:
+        ascii_text = str(obj).encode('string_escape')
+        return unicode(ascii_text)
+
+
 class Attribute(object):
 
     GRAPH, NODE, EDGE, ALL = 'graph', 'node', 'edge', 'all'
@@ -213,7 +224,7 @@ class Attribute(object):
         'long': (lambda x: str(int(x)), lambda x: int(x.text)),
         'float': (lambda x: str(float(x)), lambda x: float(x.text)),
         'double': (lambda x: str(float(x)), lambda x: float(x.text)),
-        'string': (lambda x: unicode(x, 'utf8'), lambda x: unicode(x.text)),
+        'string': (lambda x: safe_unicode(x, 'utf8'), lambda x: safe_unicode(x.text)),
     }
 
     def __init__(self, graph, id, domain, name, type, default=None,
@@ -741,13 +752,22 @@ class GraphMLDocument(object):
         except ValueError:
             g1 = self.graph()
 
-        [g2] = other.graphs.values()
+        if other.graphs:
+            [g2] = other.graphs.values()
         g1.merge(g2)
 
     def normalized(self):
         doc = GraphMLDocument()
         doc.merge(self)
         return doc
+
+
+class GraphMLWriter(object):
+    def __init__(self, doc):
+        self.doc = doc
+
+    def write_graphml(self, stream):
+        return self.doc.normalized().to_file(stream)
 
 
 def merge_graphs(documents, into=None):
