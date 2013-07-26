@@ -7,3 +7,4 @@ dropin.cache
 .webassets-cache
 Gemfile.lock
 /temp
+/docs/_build
