@@ -208,7 +208,10 @@ def safe_unicode(obj, *args):
         return obj
 
     try:
-        return unicode(obj, *args)
+        if isinstance(obj, basestring):
+            return unicode(obj, *args)
+        else:
+            return unicode(obj)
     except UnicodeDecodeError:
         ascii_text = str(obj).encode('string_escape')
         return unicode(ascii_text)

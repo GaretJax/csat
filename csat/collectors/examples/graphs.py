@@ -234,7 +234,7 @@ class Delaunay(Graph):
     key = 'delaunay'
     description = 'Delaunay'
 
-    nodes = 2000
+    nodes = 500
 
     def populate_graph(self, graph, numnodes):
         nodes = []
@@ -277,7 +277,7 @@ class MultidomainDelaunay(Delaunay):
     key = 'multidelaunay'
     description = 'Multidomain Delaunay'
 
-    nodes = (15, 25, 35)
+    nodes = (21, 25, 28)
     edges = 20
 
     def build(self):

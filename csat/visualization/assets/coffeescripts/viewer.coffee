@@ -205,7 +205,7 @@ class GenericOptionsPanel extends Panel
             edgecolor: {
                 label: 'Edge color',
                 type: 'color',
-                initial: '#888888',
+                initial: '#333333',
                 setter: 'setEdgeColor',
             }
             direction: {
@@ -217,7 +217,7 @@ class GenericOptionsPanel extends Panel
             transparency: {
                 label: 'Edge transparency',
                 type: 'boolean',
-                initial: true,
+                initial: false,
                 setter: 'setEdgeTransparency',
             }
             thickness: {
@@ -557,9 +557,11 @@ class NodeInfoPanel extends Panel
 
         add('FQID', node.fqid)
         add('Domain', node.domain.getAttr('domain'))
-        add('Degree', node.getAttr('degree'))
+        add('Total degree', node.getAttr('totdegree'))
+        add('Degree (und.)', node.getAttr('degree'))
         add('In-degree', node.getAttr('indegree'))
         add('Out-degree', node.getAttr('outdegree'))
+        add('Self-loops', node.getAttr('selfloops'))
 
         for key, val of node.attributes
             add(key, val)
@@ -707,9 +709,11 @@ class LabelsDisplaySettings
 
 class NodesDisplaySettings
     @genericNodeAttributes = [
-        ['degree', 'Degree'],
+        ['totdegree', 'Total degree'],
+        ['degree', 'Undirected Degree'],
         ['indegree', 'In-degree'],
         ['outdegree', 'Out-degree'],
+        ['selfloops', 'Self loops'],
     ]
 
     @textures = [
@@ -919,6 +923,7 @@ class ObjectControls
             @reset()
             @updateIndicator()
         ).on('mousewheel', (e) =>
+            e.preventDefault()
             pos = @positionFromEvent(e)
             direction = e.originalEvent.wheelDelta / 120
 
@@ -998,11 +1003,11 @@ class ObjectControls
         if d - offset < 1
             return
 
-        ax = pos.x - @viewer.container.find('canvas').width() / 2
-        ay = pos.y - @viewer.container.find('canvas').height() / 2
+        #ax = pos.x - @viewer.container.find('canvas').width() / 2
+        #ay = pos.y - @viewer.container.find('canvas').height() / 2
 
-        tx = ax * (offset - 1) * @viewer.ratio
-        ty = -ay * (offset - 1) * @viewer.ratio
+        #tx = ax * (offset - 1) * @viewer.ratio
+        #ty = -ay * (offset - 1) * @viewer.ratio
 
         translation = new THREE.Matrix4()
         translation.makeTranslation(0, 0, offset)
@@ -1014,12 +1019,71 @@ class ObjectControls
         rotationX = new THREE.Matrix4()
         rotationX.makeRotationX(offset.y * @rotationSpeed / 100)
         rotationZ = new THREE.Matrix4()
-        rotationZ.makeRotationZ(offset.z * @rotationSpeed / 100)
+        rotationZ.makeRotationZ(-offset.z * @rotationSpeed / 100)
 
         rotation = new THREE.Matrix4().multiplyMatrices(rotationX, rotationY)
         rotation.multiply(rotationZ)
 
         @viewer.getCurrentObject().applyMatrix(rotation)
+
+
+class AnimationPanel extends Panel
+    constructor: (@viewer) ->
+        @playing = false
+        @speed = 2
+        @zoom = false
+        super()
+
+    togglePlay: =>
+        if @playing
+            @pause()
+        else
+            @play()
+
+    pause: ->
+        @playing = false
+        clearInterval(@timer)
+
+    play: ->
+        @playing = true
+        p = =>
+            @step()
+        @timer = setInterval(p, 20)
+
+    step: =>
+        if @zoom
+            zoom = if this.zoomin then 0.2 else -0.2
+            @viewer.controls.zoom(undefined, zoom)
+        @viewer.controls.rotate(new THREE.Vector3(-@speed, @speed / 4, @speed / 8))
+
+    getTitle: -> 'Animate'
+    getClass: -> 'animate'
+    getContent: ->
+        t = @
+        $('<div/>')
+            .append(
+                $('<input/>').val(@speed * 50).change(->
+                    t.speed = parseInt($(this).val()) / 50
+                )
+            )
+            .append(
+                $('<input type="checkbox"/>').change(->
+                    t.zoomin = $(this).is(':checked')
+                )
+            )
+            .append(
+                $('<button/>')
+                    .text('Toggle zoom')
+                    .click(->t.zoom = !t.zoom)
+                    .addClass('btn')
+            )
+            .append(
+                $('<button/>')
+                    .text('Play/Pause')
+                    .click(=>@togglePlay())
+                    .addClass('btn')
+            )
+
 
 
 makePositionAxis = (text, size, color) ->
@@ -1125,6 +1189,7 @@ class Viewer
         @addPanel('thumbnail', new ThumbnailPanel(this)).collapse()
         #@addPanel('nodes-display', new NodesDisplayPanel(this).collapse())
         @addPanel('export', new ExportPanel(this))
+        @addPanel('animation', new AnimationPanel(this))
 
         new NodesDisplaySettings(this)
         new LabelsDisplaySettings(this)
@@ -1221,7 +1286,7 @@ class Viewer
         # WebGL
         container = $('.viewport', this.container)
 
-        @camera = new THREE.PerspectiveCamera(45, 1, 0.1, 2000)
+        @camera = new THREE.PerspectiveCamera(45, 1, 0.1, 20000)
         @camera.position.z = 90
 
         @controls = new ObjectControls(@)
@@ -1316,9 +1381,10 @@ class Viewer
                 new FRLayout2DAsyncFactory(),
                 new FRLayout2DFactory(),
                 new FRLayout3DFactory(),
-            ], [                     # Inter-domain layouts
+            ], [
+                new FRLayout2DFactory(),# Inter-domain layouts
                 new StackedLayoutFactory(),
-                new FRLayout2DFactory(),
+
                 new FRLayout3DFactory(),
             ]),
             new ExtrudedStrategy([   # Domain layouts

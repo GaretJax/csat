@@ -355,17 +355,20 @@ class FruchtermanReingoldLayout2D extends IterativeLayout
         @_calculateAttraction()
 
     _applyPositions: ->
-        fmax = @radius / 2
+        fmax = @radius / 5
         fmax2 = fmax * fmax
         temp = @currentIteration / @iterations * @temperature
+        temp2 = temp * temp
 
         @nodes.iter((node) =>
             if @onlyVisible and not node.isVisible()
                 return
-            d = node._force.normalize().multiplyScalar(temp)
-            if d.lengthSq() > fmax2
-                d.setLength(fmax)
-            p = node.getPosition().clone().add(d)
+            #d = node._force.normalize().multiplyScalar(temp)
+            #if d.lengthSq() > fmax2
+            #    d.setLength(fmax)
+            if node._force.lengthSq() > temp2
+                node._force.setLength(temp)
+            p = node.getPosition().clone().add(node._force)
             if p.lengthSq() > @radius * @radius
                 p.setLength(@radius)
             p.setComponent(@axis, 0)
@@ -421,7 +424,7 @@ class FRLayout2DFactory extends LayoutFactory
             area: {
                 label: 'Show surface'
                 type: 'boolean'
-                initial: true
+                initial: false
                 setter: 'setAreaVisible'
             }
             visible: {
@@ -673,16 +676,17 @@ class FruchtermanReingoldLayout3D extends FruchtermanReingoldLayout2D
         )
 
     _applyPositions: ->
-        fmax = @radius / 2
+        fmax = @radius / 5
         fmax2 = fmax * fmax
-        temp = @currentIteration / @iterations * @temperature / @count
+        temp = @currentIteration / @iterations * @temperature
+        temp2 = temp * temp
 
         @nodes.iter((node) =>
             if @onlyVisible and not node.isVisible()
                 return
-            d = node._force.normalize().multiplyScalar(temp)
-            if d.lengthSq() > fmax2
-                d.setLength(fmax)
+            d = node._force
+            if d.lengthSq() > temp2
+                d = d.setLength(temp)
             p = node.getPosition().clone().add(d)
             if p.lengthSq() > @radius * @radius
                 p.setLength(@radius)
@@ -698,7 +702,7 @@ class FRLayout3DFactory extends LayoutFactory
                 label: 'Optimal distance'
                 type: 'integer'
                 min: 1
-                initial: 50
+                initial: 10
                 setter: 'setK'
             }
             temperature: {
@@ -721,7 +725,7 @@ class FRLayout3DFactory extends LayoutFactory
                 label: 'Maximal radius'
                 type: 'integer'
                 min: 1
-                initial: 15
+                initial: 40
                 setter: 'setRadius'
             }
             wireframe: {

@@ -1,4 +1,4 @@
-class FR2DWorker extends IterativeLayoutWorker
+class FR3DWorker extends IterativeLayoutWorker
     constructor: ->
         super
         @iterations = Infinity
@@ -69,15 +69,19 @@ class FR2DWorker extends IterativeLayoutWorker
 
         fmax = radius / 2
         fmax2 = Math.pow(fmax, 2)
-        temp = (1 - @iteration / @iterations) * @temperature / @count
+        temp = (1 - @iteration / @iterations) * @temperature
+        temp2 = temp * temp
 
         @nodes.iter((node) =>
-            d = node.force.multiplyScalar(temp)
-            if d.lengthSq() > fmax2
-                d.setLength(fmax)
+            #d = node.force.multiplyScalar(temp)
+            #if d.lengthSq() > fmax2
+            #    d.setLength(fmax)
+            d = node.force
+            if d.lengthSq() > temp2
+                d = d.setLength(temp)
             p = node.position.add(d)
             if p.lengthSq() > r
                 p.setLength(radius)
         )
 
-onmessage = new FR2DWorker().handleMessage
+onmessage = new FR3DWorker().handleMessage

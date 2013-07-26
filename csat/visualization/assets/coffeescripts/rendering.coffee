@@ -209,7 +209,7 @@ class DomainEdgesObject extends THREE.Line
             attributes: attributes
             vertexShader: DomainEdgesObject.vertexShader
             fragmentShader: DomainEdgesObject.fragmentShader
-            transparent: true
+            transparent: false
             linewidth: 1
             #depthWrite: false
             #combine: THREE.MixOperation

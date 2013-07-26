@@ -42,6 +42,7 @@ class Node
         @_degree = 0
         @_inDegree = 0
         @_outDegree = 0
+        @_selfloops = 0
         @_size = 10
         @_color = new THREE.Color(0xffffff)
         @_opacity = 1.0
@@ -135,8 +136,12 @@ class Node
                     return @domain.getAttr('domain')
                 else
                     return @attributes['domain']
+            when 'totdegree'
+                return @_degree + @_inDegree + @_outDegree + 2 * @_selfloops
             when 'degree'
                 return @_degree
+            when 'selfloops'
+                return @_selfloops
             when 'indegree'
                 return @_inDegree
             when 'outdegree'
@@ -180,12 +185,23 @@ class Edge
                 @dst._edges.push(@)
 
         @_weight = 1
-        @_color = new THREE.Color(0x888888)
-        @_opacity = 0.8
+        @_color = new THREE.Color(0x000000)
+        @_opacity = 0.5
         @_visible = true
 
         if not @domain?
             @domain = @model
+
+        if @src == @dst
+            @src._selfloops += 1
+        else
+            if @directed
+                @src._outDegree += 1
+                @dst._inDegree += 1
+            else
+                @src._degree += 1
+                @dst._degree += 1
+
 
     other: (node) ->
         if node == @src
@@ -306,17 +322,8 @@ class Domain extends Node
         src = this.nodes[src[1]]
         dst = this.nodes[dst[1]]
 
-        src._degree += 1
-        dst._degree += 1
-
         edge = new Edge(this.model, this, el.attr('id'), src, dst, attrs)
-
         edge._index = this.edges.length
-
-        if edge.directed
-            src._outDegree += 1
-            dst._inDegree += 1
-
         this.edges.push(edge)
         return edge
 
