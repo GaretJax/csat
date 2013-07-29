@@ -1396,6 +1396,7 @@ class Viewer
                 new FRLayout2DAsyncFactory(),
                 new FRLayout2DFactory(),
                 new FRLayout3DFactory(),
+                new FRLayout3DAsyncFactory(),
             ]),
             new ClusteredStrategy([
                 new FRLayout2DAsyncFactory(),
