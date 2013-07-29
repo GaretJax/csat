@@ -44,7 +44,7 @@ class Setup(object):
 
 setup(
     name='csat',
-    version='0.2.2',
+    version='0.3',
     description='Complex Software Analysis Toolkit',
     author='Jonathan Stoppani',
     author_email='jonathan@stoppani.name',
