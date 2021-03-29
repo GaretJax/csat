@@ -12,7 +12,7 @@ django-polymorphic==0.4.0
 txWS==0.7.1
 Coffin-GaretJax==0.3.8.dev
 lxml==3.2.1
-Pygments==1.6
+Pygments==2.7.4
 GitPython==0.3.2.RC1
 PyGithub==1.16.0
 beautifulsoup4==4.1.3
