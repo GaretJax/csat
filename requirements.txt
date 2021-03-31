@@ -11,7 +11,7 @@ django-crispy-forms==1.2.3
 django-polymorphic==0.4.0
 txWS==0.7.1
 Coffin-GaretJax==0.3.8.dev
-lxml==3.2.1
+lxml==4.6.3
 Pygments==1.6
 GitPython==0.3.2.RC1
 PyGithub==1.16.0
