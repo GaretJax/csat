@@ -3,7 +3,7 @@ South==0.7.6
 Twisted==13.0.0
 Jinja2==2.6
 Markdown==2.3.1
-Pillow==2.0.0
+Pillow==9.0.1
 zope.interface==4.0.5
 webassets==0.8
 django-assets==0.8
